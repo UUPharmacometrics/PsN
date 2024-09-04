@@ -113,7 +113,7 @@ jobs:
     needs: [build, get-nonmem]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: targz
       - name: Cache NONMEM
@@ -184,7 +184,7 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Download installation tarball
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: targz
       - name: Unpack installation tarball
@@ -263,7 +263,7 @@ jobs:
       runs-on: windows-2019
       steps:
         - name: Download installation tarball
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4.1.7
           with:
             name: targz
         - name: Unpack installation tarball
@@ -508,14 +508,14 @@ jobs:
     runs-on: windows-2019
     steps:
       - name: Download installation tarball
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
             name: win-installer
       - name: Unzip installer
         run: 7z x *.zip
         shell: cmd
       - name: Get NONMEM
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: cache-workaround
       - name: Unzip NONMEM
@@ -616,15 +616,15 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Get PsN installer
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: targz
       - name: Get docs
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: docs
       - name: Get Windows installer
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: win-installer
       - name: Release
