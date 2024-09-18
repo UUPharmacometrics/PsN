@@ -22,12 +22,12 @@ jobs:
       - name: make release
         run: make release
       - name: Upload installation artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: targz
           path: PsN-*.tar.gz
       - name: Upload documentation artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
             name: docs
             path: doc/*.pdf
@@ -104,7 +104,7 @@ jobs:
           echo 'key Q' >>lynxcmds
           lynx -accept-all-cookies nonmem.iconplc.com -cmd_script=lynxcmds
       - name: Upload cache workaround
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: cache-workaround
           path: 751.zip
@@ -113,7 +113,7 @@ jobs:
     needs: [build, get-nonmem]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: targz
       - name: Cache NONMEM
@@ -173,7 +173,7 @@ jobs:
           cd $TESTPATH
           prove -r -j3 system
       - name: Upload failed system test directories artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
             name: system-tests-ubuntu
@@ -184,7 +184,7 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Download installation tarball
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: targz
       - name: Unpack installation tarball
@@ -252,7 +252,7 @@ jobs:
           cd $TESTPATH
           prove -r -j4 system
       - name: Upload failed system test directories artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
             name: system-tests-macos
@@ -263,7 +263,7 @@ jobs:
       runs-on: windows-2019
       steps:
         - name: Download installation tarball
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
           with:
             name: targz
         - name: Unpack installation tarball
@@ -498,7 +498,7 @@ jobs:
             echo "packagename=${packagename}" >> $GITHUB_ENV
           shell: bash
         - name: Upload Windows package
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: win-installer
             path: ${{ env.packagename }}
@@ -508,14 +508,14 @@ jobs:
     runs-on: windows-2019
     steps:
       - name: Download installation tarball
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
             name: win-installer
       - name: Unzip installer
         run: 7z x *.zip
         shell: cmd
       - name: Get NONMEM
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: cache-workaround
       - name: Unzip NONMEM
@@ -605,7 +605,7 @@ jobs:
           prove -r -j3 system
         shell: cmd
       - name: Upload failed system test directories artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
             name: system-tests-windows
@@ -616,15 +616,15 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Get PsN installer
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: targz
       - name: Get docs
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: docs
       - name: Get Windows installer
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: win-installer
       - name: Release
