@@ -8,6 +8,7 @@ use File::Copy qw/copy mv/;
 use File::Path;
 use File::Glob;
 use File::Spec;
+use File::stat;
 use Storable;
 use random;
 use nonmemrun;
@@ -2910,8 +2911,11 @@ sub copy_model_and_input
             # $file is a ref to an array with two elements, the first is a
             # path, the second is a name.
 
-            copy( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if unix?
-
+            my $source_path = $file->[0] . $file->[1];
+            copy($source_path, $file->[1]);
+            if ($Config{osname} ne 'MSWin32' and -x $source_path) {
+                chmod((stat($file->[1]))->mode | 0111, $file->[1]);
+            }
         }
 
 
