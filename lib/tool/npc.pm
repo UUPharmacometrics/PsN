@@ -1643,7 +1643,9 @@ sub modelfit_setup
                 $refmodel->_write();
                 push @refcorr_models, $refmodel;
             }
-            if (is_var_defined_in_code($refmodel, $self->dv)) {
+            my $dv_code = is_var_defined_in_code($refmodel, $self->dv);
+            my $idv_code = is_var_defined_in_code($refmodel, $self->idv);
+            if ($dv_code || $idv_code) {
                 sub prepare_pred_model {
                     my $self = shift;
                     my $base_model = shift;
@@ -1676,7 +1678,7 @@ sub modelfit_setup
                         record_strings => ['(999) ONLYSIMULATION SUBPROBLEMS=1'],
                         problem_numbers => [($self->origprobnum())]);
                     $refpredmodel->set_records(type => 'table',
-                        record_strings => [$self->dv, 'MDV', 'NOAPPEND', 'FILE=npctab.dta'],
+                        record_strings => [$self->dv, $self->idv, 'MDV', 'NOAPPEND', 'FILE=npctab.dta'],
                         problem_numbers => [($self->origprobnum())]);
                     $refpredmodel->_write();
                     return $refpredmodel;
