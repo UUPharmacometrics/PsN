@@ -96,10 +96,11 @@ Getopt::Long::config("auto_abbrev");
     );
 
 
-@model_options = ("extra_files:s",
+@both_model_and_tool_options = ("last_est_complete!", "missing_data_token:i", "niter_eonly:i");
+
+@model_only_options = ("extra_files:s",
                   "extra_output:s",
                   "maxevals:i",
-                  "missing_data_token:i",
                   "tbs!",
                   "dtbs!",
                   "tbs_lambda:s",
@@ -112,10 +113,10 @@ Getopt::Long::config("auto_abbrev");
                   "mirror_from_lst!",
                   "omega_before_pk!",
                   "outputfile:s",
-                  "last_est_complete!",
-                  "niter_eonly:i",
                   "psn_record_order!",
     );
+
+@model_options = (@both_model_and_tool_options, @model_only_options);
 
 my @script_options = (
     "h|?",
@@ -125,7 +126,7 @@ my @script_options = (
     "warn_with_trace!",
 );
 
-@get_opt_strings = (sort(@tool_options), sort(@model_options), sort(@script_options));
+@get_opt_strings = (sort(@tool_options), sort(@model_only_options), sort(@script_options));
 
 @extra_files;
 @extra_output;

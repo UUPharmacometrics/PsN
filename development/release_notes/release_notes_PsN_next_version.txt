@@ -5,6 +5,9 @@ Changes and bug fixes from PsN 5.4.0 to x.x.x
 
    ___General___
 
+* Fix errors caused by newer versions of perl (probably v5.40.0)
+  The errors either started with 'Attempt to call undefined import method with arguments ("splitpath" ...) via package "File::Spec"'
+  or Duplicate specification '"last_est_complete!" for option "last_est_complete"'
 
    ___vpc___
 
