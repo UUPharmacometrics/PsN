@@ -4,7 +4,6 @@ use Mouse;
 use MouseX::Params::Validate;
 use include_modules;
 use OSspecific;
-use File::Spec qw(abs2rel catfile);
 use Config;
 
 extends 'model::problem::record';

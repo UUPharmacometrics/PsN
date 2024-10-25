@@ -6,7 +6,6 @@ BEGIN {
     require File::Copy;
 }
 use File::Basename;
-use File::Spec qw(splitpath catfile);
 use Config;
 use OSspecific;
 use Storable;
