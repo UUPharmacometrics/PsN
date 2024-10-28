@@ -112,6 +112,7 @@ has 'mix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'refcorr' => ( is => 'rw', isa => 'Maybe[HashRef]' );
 has 'refcorr_data' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'refcorr_table' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'refcorr_idv' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {

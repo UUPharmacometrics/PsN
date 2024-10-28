@@ -70,7 +70,7 @@ my %optional_options = ( 'idv:s' => undef,
     'mix!' => undef,
     'refcorr:s' => undef,
     'refcorr_data:s' => undef,
-    'refcorr_table:s' => undef,
+    'refcorr_idv!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -522,11 +522,10 @@ $help_text{-refcorr_data} = <<'EOF';
     options.
 EOF
 
-$help_text{-refcorr_table} = <<'EOF';
-    -refcorr_table=filename
+$help_text{-refcorr_idv} = <<'EOF';
+    -refcorr_idv
 
-    Perform reference correction on dependent variable. Same as the refcorr option, but instead
-    of letting PsN create the reference simulations the user will provide them in a separate file. 
+    Set this option to also reference correct the variable set as idv via the -idv option.
 EOF
 
 $help_text{-refstrat} = <<'EOF';
@@ -766,7 +765,7 @@ my $vpc =
       mix                  => $options{'mix'},
       refcorr => $refcorr,
       refcorr_data => $refcorr_data,
-      refcorr_table => $options{'refcorr_table'},
+      refcorr_idv => $options{'refcorr_idv'},
       );
 
 $vpc-> print_options (cmd_line => $cmd_line,
