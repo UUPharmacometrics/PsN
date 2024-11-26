@@ -22,7 +22,6 @@ Getopt::Long::config("auto_abbrev");
           "clean:i",
           "compress!",
           "condition_number_limit:f",
-          "correlation_limit:f",
           "crash_restarts:i",
           "degree:f",
           "directory:s",
@@ -1096,10 +1095,6 @@ EOF
 
   Example: -nm_output=ext,cov
 
-EOF
-    $help_hash{-correlation_limit} = <<'EOF';
-    -correlation_limit='number'
-    All correlations above this number will be listed in the output from sumo.
 EOF
 
     $help_hash{-accepted_ofv_difference} = <<'EOF';
