@@ -70,7 +70,6 @@ Getopt::Long::config("auto_abbrev");
           "seed:s",
           "shrinkage",
           "significant_digits_accept:f",
-          "sign_digits_off_diagonals:i",
           "slurm_prepend_flags:s",
           "slurm_account:s",
           "slurm_partition:s",
@@ -1244,12 +1243,6 @@ EOF
     empirical Bayes estimates (EBEs) towards the mean of the expected
     distribution.  A 'large' shrinkage means that diagnostics using EBEs cannot
     be trusted.
-EOF
-
-    $help_hash{-sign_digits_off_diagonals} = <<'EOF';
-    -sign_digits_off_diagonals='integer'
-    The off-diagonal elements are checked against +-1 with this many
-    significant digits. Valid only in sumo.
 EOF
 
     $help_hash{-precision} = <<'EOF';
