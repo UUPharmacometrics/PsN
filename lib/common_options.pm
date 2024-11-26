@@ -83,7 +83,6 @@ Getopt::Long::config("auto_abbrev");
           "torque_prepend_flags:s",
           "tweak_inits!",
           "verbose!",
-          "near_bound_sign_digits:i",
           "precision:i",
           "so!",
           "zip!",
@@ -1145,12 +1144,6 @@ EOF
     (option -t to sbatch). Format is either minutes, e.g. -max_runtime=10,
     or hours:minutes:seconds, e.g. -max_runtime=4:0:0, or days-hours,
     e.g. -max_runtime=3-0
-EOF
-
-    $help_hash{-near_bound_sign_digits} = <<'EOF';
-    -near_bound_sign_digits='integer'
-    If a parameter estimate is equal to a bound with this many
-    significant digits, a warning will be printed. Valid only with sumo.
 EOF
 
     $help_hash{-prepend_model_file_name} = <<'EOF';
