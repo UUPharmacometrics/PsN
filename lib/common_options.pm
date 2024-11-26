@@ -1239,10 +1239,6 @@ EOF
     be trusted.
 EOF
 
-    $help_hash{-precision} = <<'EOF';
-    -precision='integer'
-    Precision in sumo output.
-EOF
     $help_hash{-degree} = <<'EOF';
     -degree=number
     When tweaking initial estimates in retries/parallel_retries, this number decides the range for the

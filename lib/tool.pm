@@ -108,7 +108,6 @@ has 'nonparametric_etas' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nonparametric_marginals' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'shrinkage' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'eigen_values' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'precision' => ( is => 'rw', isa => 'Num' );
 has 'quick_summarize' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'handle_crashes' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'handle_msfo' => ( is => 'rw', isa => 'Bool', default => 0 );
