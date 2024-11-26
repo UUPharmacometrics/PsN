@@ -1076,12 +1076,6 @@ EOF
     set option -omega_before_pk.
 EOF
 
-    $help_hash{-condition_number_limit} = <<'EOF';
-    -condition_number_limit='number'
-    An error will be raised in the output from sumo
-    if the condition number is greater than this number.
-EOF
-
     $help_hash{-nm_output} = <<'EOF';
     -nm_output='comma-separated list of file extensions'
 

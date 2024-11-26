@@ -90,7 +90,6 @@ has 'tweak_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'degree' => ( is => 'rw', isa => 'Num', default => 0.1 );
 has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_raw_results_callback' => ( is => 'rw' );
-has 'condition_number_limit' => ( is => 'rw', isa => 'Num', default => 1000 );
 has 'large_theta_cv_limit' => ( is => 'rw', isa => 'Num', default => 0.50 );
 has 'large_omega_cv_limit' => ( is => 'rw', isa => 'Num', default => 0.8 );
 has 'large_sigma_cv_limit' => ( is => 'rw', isa => 'Num', default => 0.8 );
