@@ -85,7 +85,6 @@ Getopt::Long::config("auto_abbrev");
           "tweak_inits!",
           "verbose!",
           "near_bound_sign_digits:i",
-          "near_zero_boundary_limit:f",
           "precision:i",
           "so!",
           "zip!",
@@ -1157,12 +1156,6 @@ EOF
     -near_bound_sign_digits='integer'
     If a parameter estimate is equal to a bound with this many
     significant digits, a warning will be printed. Valid only with sumo.
-EOF
-
-    $help_hash{-near_zero_boundary_limit} = <<'EOF';
-    -near_zero_boundary_limit='number'
-    When the bound is zero, the check using -near_bound_sign_digits is not valid.
-    Use this limit instead. Valid only with sumo.
 EOF
 
     $help_hash{-prepend_model_file_name} = <<'EOF';

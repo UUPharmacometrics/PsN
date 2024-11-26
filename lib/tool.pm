@@ -93,7 +93,6 @@ has '_raw_results_callback' => ( is => 'rw' );
 has 'correlation_limit' => ( is => 'rw', isa => 'Num', default => 0.85 );
 has 'condition_number_limit' => ( is => 'rw', isa => 'Num', default => 1000 );
 has 'near_bound_sign_digits' => ( is => 'rw', isa => 'Int', default => 2 );
-has 'near_zero_boundary_limit' => ( is => 'rw', isa => 'Num', default => 0.01 );
 has 'sign_digits_off_diagonals' => ( is => 'rw', isa => 'Int', default => 2 );
 has 'large_theta_cv_limit' => ( is => 'rw', isa => 'Num', default => 0.50 );
 has 'large_omega_cv_limit' => ( is => 'rw', isa => 'Num', default => 0.8 );
