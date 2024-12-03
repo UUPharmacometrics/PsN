@@ -18,7 +18,7 @@ copy_test_files($tempdir,["scm/pheno_with_cov.mod","scm/pheno_ignore.mod","scm/c
 chdir($tempdir);
 my @scmcommands = 
 	(
-        #get_command('boot_scm') . " -samples=2 config_time_varying.scm -dummy_cov=WGT -stratify_on=APGR ",
+     get_command('boot_scm') . " -samples=2 config_time_varying.scm -dummy_cov=WGT -stratify_on=APGR ",
 	 get_command('boot_scm') . " -samples=2 scm_config.scm -dummy_cov=WGT ",
 	 get_command('boot_scm') . " -samples=2 config_ignore.scm -stratify_on=CVD2 ",
 	 get_command('boot_scm') . " -samples=2 config_foce.scm -stratify_on=CVD2 -nm_out=ext,cov -methodA",

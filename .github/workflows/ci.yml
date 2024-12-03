@@ -166,6 +166,8 @@ jobs:
           export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j8 unit
+      - name: Debug session
+        uses: mxschmitt/action-tmate@v3
       - name: Run system tests
         run: |
           export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
