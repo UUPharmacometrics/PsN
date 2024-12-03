@@ -126,8 +126,11 @@ jobs:
         run: unzip -P $ZIP_KEY 751.zip
         env:
           ZIP_KEY: ${{secrets.ZIP_KEY}}
-      - name: Install gfortran
-        run: sudo apt install gfortran
+      - name: Setup gfortran
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: 12
       - name: Install NONMEM
         run: |
           cd nm751CD
@@ -166,8 +169,6 @@ jobs:
           export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j8 unit
-      - name: Debug session
-        uses: mxschmitt/action-tmate@v3
       - name: Run system tests
         run: |
           export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
