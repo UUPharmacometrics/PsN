@@ -211,12 +211,10 @@ jobs:
         run: unzip -P $ZIP_KEY 751.zip
         env:
           ZIP_KEY: ${{secrets.ZIP_KEY}}
-      - name: Debug session
-        uses: mxschmitt/action-tmate@v3
       - name: Install NONMEM
         run: |
           cd nm751CD
-          /bin/bash SETUP75 $(readlink -f .) $(readlink -f ../nm751) gfortran y ar same rec q
+          /bin/bash SETUP75 $(greadlink -f .) $(greadlink -f ../nm751) gfortran y ar same rec q
       - name: NONMEM license
         run: echo $LICENSE_KEY >nm751/license/nonmem.lic
         env:
