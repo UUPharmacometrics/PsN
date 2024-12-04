@@ -214,7 +214,7 @@ jobs:
       - name: Install NONMEM
         run: |
           cd nm751CD
-          /bin/bash SETUP75 $(realpath .) $(realpath ../nm751) gfortran y ar same rec q
+          /bin/bash SETUP75 $(readlink -f .) $(readlink -f ../nm751) gfortran y ar same rec q
       - name: NONMEM license
         run: echo $LICENSE_KEY >nm751/license/nonmem.lic
         env:
