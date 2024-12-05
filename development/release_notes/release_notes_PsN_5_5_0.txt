@@ -1,16 +1,20 @@
 *********************************************
-Changes and bug fixes from PsN 5.4.0 to x.x.x
+Changes and bug fixes from PsN 5.4.0 to 5.5.0
 *********************************************
 
 
    ___General___
 
+* Fix problems giving executable scripts to extra_files option
 * Fix errors caused by newer versions of perl (probably v5.40.0)
   The errors either started with 'Attempt to call undefined import method with arguments ("splitpath" ...) via package "File::Spec"'
   or Duplicate specification '"last_est_complete!" for option "last_est_complete"'
 
    ___vpc___
 
+* Support reference correction of model defined idvs having etas
+* Remove the refcorr_table option
+* Fixes to calculation of refcorr for non-logtransformed data
 
    ___frem___
 
