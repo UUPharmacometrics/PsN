@@ -37,7 +37,7 @@ jobs:
     steps:
       - name: Cache NONMEM
         id: cache-nonmem
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
             path: 751.zip
             key: nonmem-751
@@ -118,7 +118,7 @@ jobs:
           name: targz
       - name: Cache NONMEM
         id: cache-nonmem
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
             path: 751.zip
             key: nonmem-751
@@ -203,7 +203,7 @@ jobs:
         uses: r-lib/actions/setup-pandoc@v1
       - name: Get NONMEM
         id: cache-nonmem
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
             path: 751.zip
             key: nonmem-751
