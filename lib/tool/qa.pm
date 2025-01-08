@@ -512,12 +512,12 @@ sub modelfit_setup
                     bipp => 1,
                     force_posdef_covmatrix => 1,
                 );
-                $frem->run();
                 $frem->print_options(
                     toolname => 'frem',
                     local_options => [ 'skip_omegas', 'rescale' ],
                     common_options => \@common_options::tool_options
                 );
+                $frem->run();
                 my $err = $frem->prepare_results();
                 if ($err) {
                     print("Frem result generation err (no file could be generated):\n");
