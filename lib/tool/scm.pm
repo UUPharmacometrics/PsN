@@ -109,6 +109,7 @@ has 'extra_data_columns' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub
 has 'force_binarize' => ( is => 'rw', isa => 'Bool', default => 0 );   # Force binarization of categorical covariates
 has 'estimation_options' => ( is => 'rw', isa => 'Str' );
 has 'auto_tv' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'one_model_per_covariate' => ( is => 'rw', isa => 'Bool', default => 0);
 
 
 sub BUILD
@@ -3930,6 +3931,10 @@ sub _create_models
                 $self->main_data_file($orig_model->datafiles(absolute_path => 1)->[0]);
             }
         }
+        my $one_model_per_covariate = $self->one_model_per_covariate;
+        # hash from covariate to model object
+        # Only used if one_model_per_covariate
+        my %applicant_models;
         open( DONE_LOG, '>'.$self -> directory."/m$model_number/done.log" );
         foreach my $parameter ( sort keys %relations ) {
             foreach my $covariate ( sort keys %{$relations{$parameter}} ) {
@@ -3999,54 +4004,63 @@ sub _create_models
                         $parameter.$covariate.$state.".lst" );
 
                     my $applicant_model;
-                    $applicant_model = $orig_model -> copy( filename    => $dir.$filename,
-                                                            copy_datafile   => 0,
-                                                            write_copy => 0,
-                                                            copy_output => 0);
-                    $applicant_model -> ignore_missing_files(1);
-                    $applicant_model -> outputfile( $odir.$outfilename );
-                    $applicant_model -> set_outputfile();
-                    my @table_names = @{$applicant_model -> table_names};
-                    for ( my $i = 0; $i <= $#table_names; $i++ ) {
-                        for ( my $j = 0; $j < scalar @{$table_names[$i]}; $j++ ) {
-                            (undef, undef, my $name_of_table) = File::Spec->splitpath($table_names[$i][$j]);
-                            $table_names[$i][$j] = $self -> directory.
-                            '/m'.$model_number.'/'.
-                            $filename.'.'.
-                            $name_of_table;
+                    my $first = 1;
+                    if ($one_model_per_covariate) {
+                        if (exists($applicant_models{$covariate})) {
+                            $applicant_model = $applicant_models{$covariate};
+                            $first = 0;
                         }
                     }
-                    $applicant_model -> table_names( new_names            => \@table_names,
-                                                     ignore_missing_files => 1);
-                    my @used_covariates = ();
-                    # $included_relations is a reference to $self -> included_relations
-                    # and should only be initialized for truly incorporated relations
-                    # see beginning of loop above.
-                    foreach my $incl_par ( sort keys %included_relations ) {
-                        foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
-                            next if ( $incl_par eq $parameter and $incl_cov eq $covariate );
-                            if ($self->linearize()){
-                                $self ->
-                                add_code_linearize( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
-                                    nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
-                                    inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
-                                    bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
-                                    applicant_model => $applicant_model,
-                                    sum_covariates  => $self->sum_covariates_hash->{$incl_par},
-                                    parameter       => $incl_par,
-                                    covariate       => $incl_cov );
-                            }else{
-                                $self ->
-                                add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
-                                    nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
-                                    inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
-                                    bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
-                                    applicant_model => $applicant_model,
-                                    sum_covariates  => $self->sum_covariates_hash->{$incl_par},
-                                    parameter       => $incl_par,
-                                    covariate       => $incl_cov );
+                    my @used_covariates;
+                    if ($first) {
+                        $applicant_model = $orig_model->copy(filename => $dir.$filename,
+                                                             copy_datafile => 0,
+                                                             write_copy => 0,
+                                                             copy_output => 0);
+                        $applicant_model->ignore_missing_files(1);
+                        $applicant_model->outputfile($odir.$outfilename);
+                        $applicant_model->set_outputfile();
+                        my @table_names = @{$applicant_model->table_names};
+                        for (my $i = 0; $i <= $#table_names; $i++) {
+                            for (my $j = 0; $j < scalar @{$table_names[$i]}; $j++) {
+                                (undef, undef, my $name_of_table) = File::Spec->splitpath($table_names[$i][$j]);
+                                $table_names[$i][$j] = $self->directory .
+                                '/m'.$model_number.'/' .
+                                $filename.'.' .
+                                $name_of_table;
                             }
-                            push( @used_covariates, $incl_cov );
+                        }
+                        $applicant_model -> table_names( new_names            => \@table_names,
+                                                         ignore_missing_files => 1);
+                        # $included_relations is a reference to $self -> included_relations
+                        # and should only be initialized for truly incorporated relations
+                        # see beginning of loop above.
+                        foreach my $incl_par ( sort keys %included_relations ) {
+                            foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
+                                next if ( $incl_par eq $parameter and $incl_cov eq $covariate );
+                                if ($self->linearize()){
+                                    $self ->
+                                    add_code_linearize( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
+                                        nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
+                                        inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
+                                        bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
+                                        applicant_model => $applicant_model,
+                                        sum_covariates  => $self->sum_covariates_hash->{$incl_par},
+                                        parameter       => $incl_par,
+                                        covariate       => $incl_cov );
+                                }else{
+                                    $self ->
+                                    add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
+                                        nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
+                                        inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
+                                        bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
+                                        applicant_model => $applicant_model,
+                                        sum_covariates  => $self->sum_covariates_hash->{$incl_par},
+                                        parameter       => $incl_par,
+                                        covariate       => $incl_cov );
+                                }
+                                push( @used_covariates, $incl_cov );
+                            }
                         }
                     }
                     # If the new state is base level (backward search) don't add this relation, otherwise:
@@ -4074,56 +4088,58 @@ sub _create_models
                         }
                         push( @used_covariates, $covariate );
                     }
-                    my @all_covariates;
-                    if ( defined $self -> categorical_covariates() ) {
-                        push( @all_covariates, @{$self -> categorical_covariates()});
-                    }
-                    if ( defined $self -> continuous_covariates() ) {
-                        push( @all_covariates, @{$self -> continuous_covariates()});
-                    }
-                    $self -> drop_undrop_covariates( applicant_model => $applicant_model,
-                        used_covariates => \@used_covariates,
-                        all_covariates  => \@all_covariates,
-                        do_not_drop     => $self -> do_not_drop);
-
-                    if ( defined $initial_estimates_model ) {
-                        $applicant_model -> update_inits( from_model    => $initial_estimates_model,
-                            update_thetas => 1,
-                            update_omegas => 1,
-                            update_sigmas => 1,
-                            ignore_missing_parameters => 1 )
-                        unless (not $self->run_linearized_base());
-                        if ($self->linearize) {
-                            $applicant_model->remove_records(type => 'etas');
-                            my $phi_file = $initial_estimates_model->get_phi_file();
-
-                            my $mceta = $initial_estimates_model->get_option_value(record_name => 'estimation',
-                                option_name => 'MCETA',
-                                fuzzy_match => 1
-                            );
-                            if (defined $phi_file) {
-                                if (not defined $mceta or $mceta < 1) {
-                                    $applicant_model->add_option(
-                                        record_name => 'estimation',
-                                        option_name => 'MCETA',
-                                        option_value => 1,
-                                        add_record => 1,
-                                    );
-                                }
-                                $applicant_model->set_records(type => 'etas', record_strings => [ "FILE=$phi_file" ]);
-                                if (not defined $applicant_model->extra_files) {
-                                    $applicant_model->extra_files([]);
-                                }
-                                push @{$applicant_model->extra_files}, $phi_file;
-                            }
+                    if ($first) {
+                        my @all_covariates;
+                        if ( defined $self -> categorical_covariates() ) {
+                            push( @all_covariates, @{$self -> categorical_covariates()});
                         }
-                    } else {
-                        $applicant_model -> update_inits( from_model    => $orig_model,
-                            update_thetas => 1,
-                            update_omegas => 1,
-                            update_sigmas => 1,
-                            ignore_missing_parameters => 1 )
-                        unless (not $self->run_linearized_base());
+                        if ( defined $self -> continuous_covariates() ) {
+                            push( @all_covariates, @{$self -> continuous_covariates()});
+                        }
+                        $self -> drop_undrop_covariates( applicant_model => $applicant_model,
+                            used_covariates => \@used_covariates,
+                            all_covariates  => \@all_covariates,
+                            do_not_drop     => $self -> do_not_drop);
+
+                        if ( defined $initial_estimates_model ) {
+                            $applicant_model -> update_inits( from_model    => $initial_estimates_model,
+                                update_thetas => 1,
+                                update_omegas => 1,
+                                update_sigmas => 1,
+                                ignore_missing_parameters => 1 )
+                            unless (not $self->run_linearized_base());
+                            if ($self->linearize) {
+                                $applicant_model->remove_records(type => 'etas');
+                                my $phi_file = $initial_estimates_model->get_phi_file();
+
+                                my $mceta = $initial_estimates_model->get_option_value(record_name => 'estimation',
+                                    option_name => 'MCETA',
+                                    fuzzy_match => 1
+                                );
+                                if (defined $phi_file) {
+                                    if (not defined $mceta or $mceta < 1) {
+                                        $applicant_model->add_option(
+                                            record_name => 'estimation',
+                                            option_name => 'MCETA',
+                                            option_value => 1,
+                                            add_record => 1,
+                                        );
+                                    }
+                                    $applicant_model->set_records(type => 'etas', record_strings => [ "FILE=$phi_file" ]);
+                                    if (not defined $applicant_model->extra_files) {
+                                        $applicant_model->extra_files([]);
+                                    }
+                                    push @{$applicant_model->extra_files}, $phi_file;
+                                }
+                            }
+                        } else {
+                            $applicant_model -> update_inits( from_model    => $orig_model,
+                                update_thetas => 1,
+                                update_omegas => 1,
+                                update_sigmas => 1,
+                                ignore_missing_parameters => 1 )
+                            unless (not $self->run_linearized_base());
+                        }
                     }
 
                     my $needed_thetas = $applicant_model -> nthetas();
@@ -4150,17 +4166,29 @@ sub _create_models
 
                     my @new_names = ($self->main_data_file) x scalar(@{$applicant_model->problems});
                     $applicant_model->datafiles(new_names => \@new_names);
-                    $applicant_model -> _write();
-                    push( @new_models, $applicant_model );
+                    if (not $one_model_per_covariate) {
+                        $applicant_model->_write();
+                        push(@new_models, $applicant_model);
+                    } else {
+                        $applicant_models{$covariate} = $applicant_model;
+                    }
 
-                    my %st_rel;
-                    $st_rel{'parameter'} = $parameter;
-                    $st_rel{'covariate'} = $covariate;
-                    $st_rel{'state'}     = $state;
-                    $st_rel{'continuous'} = $continuous;
-                    push( @step_relations, \%st_rel );
-                    print DONE_LOG "$parameter $covariate $continuous $old_state $state\n";
+                    if (not $one_model_per_covariate or $first) {
+                        my %st_rel;
+                        $st_rel{'parameter'} = $parameter;
+                        $st_rel{'covariate'} = $covariate;
+                        $st_rel{'state'}     = $state;
+                        $st_rel{'continuous'} = $continuous;
+                        push( @step_relations, \%st_rel );
+                        print DONE_LOG "$parameter $covariate $continuous $old_state $state\n";
+                    }
                 }
+            }
+        }
+        if ($one_model_per_covariate) {
+            foreach my $model (values %applicant_models) {
+                $model->_write();
+                push(@new_models, $model);
             }
         }
         open( TMP, ">".$self -> directory."/m$model_number/done" );

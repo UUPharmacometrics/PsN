@@ -45,6 +45,7 @@ my %optional_options = (
     "categorical_mean_offset!" => '',
     "force_binarize!" => '',
     "auto_tv!" => '',
+    "one_model_per_covariate!" => '',
 );
 
 my $res = GetOptions( \%options,
@@ -364,6 +365,12 @@ $help_text{-auto_tv} = <<'EOF';
     Try to create TVnn definitions in model automatically.
 EOF
 
+$help_text{-one_model_per_covariate} = <<'EOF';
+    -one_model_per_covariate
+
+    Create only one model per covariate
+EOF
+
 common_options::online_help('scm', \%options, \%help_text, \%required_options, \%optional_options);
 
 require model;
@@ -423,6 +430,7 @@ my $scm = scm_util::setup(
         categorical_mean_offset => $options{'categorical_mean_offset'},
         force_binarize => $options{'force_binarize'},
         auto_tv => $options{'auto_tv'},
+        one_model_per_covariate => $options{'one_model_per_covariate'},
     },
 );
 
