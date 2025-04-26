@@ -38,6 +38,7 @@ has 'picky' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' });
 has 'relations' => ( is => 'rw', isa => 'HashRef' );        # FIXME Should be named relation_definitions
 has 'retries' => ( is => 'rw', isa => 'Int|Ref', default => sub { \'' } );
 has 'linearize' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
+has 'one_model_per_covariate' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 has 'noabort' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 has 'max_steps' => ( is => 'rw', isa => 'Int|Ref', default => sub { \'' } );
 has 'epsilon' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
