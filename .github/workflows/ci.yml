@@ -33,7 +33,7 @@ jobs:
             path: doc/*.pdf
 
   get-nonmem:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Cache NONMEM
         id: cache-nonmem
@@ -616,7 +616,7 @@ jobs:
 
   release:
     needs: [test-windows, test-macos, test-ubuntu]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Get PsN installer
         uses: actions/download-artifact@v4
