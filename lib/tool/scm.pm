@@ -192,6 +192,15 @@ sub BUILD
             "will be incorrect.",newline => 1);
     }
 
+    if (defined $self->one_model_per_covariate) {
+        if (defined $self->max_steps and $self->max_steps > 1) {
+            ui->print(category => 'scm',
+                message => "Warning: Running more than one forward step with".
+                "one_model_per_covariate is not supported. Using max_steps=1", newline => 1);
+        }
+        $self->max_steps(1);
+    }
+
     $self->have_Math_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
 
     if (not defined $self->p_value() or $self->p_value() eq '') {
