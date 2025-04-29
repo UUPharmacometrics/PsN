@@ -192,7 +192,7 @@ sub BUILD
             "will be incorrect.",newline => 1);
     }
 
-    if (defined $self->one_model_per_covariate) {
+    if ($self->one_model_per_covariate) {
         if (defined $self->max_steps and $self->max_steps > 1) {
             ui->print(category => 'scm',
                 message => "Warning: Running more than one forward step with".
