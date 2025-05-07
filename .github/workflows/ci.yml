@@ -193,7 +193,7 @@ jobs:
       - name: Unpack installation tarball
         run: tar -zxvf PsN-*.tar.gz
       - name: Install system dependencies
-        run: brew install cairo mariadb-connector-c openssl@1.1 coreutils gnu-sed r
+        run: brew install mariadb-connector-c coreutils gnu-sed
       - name: Setup gfortran
         uses: fortran-lang/setup-fortran@v1
         with:
