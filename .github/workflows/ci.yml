@@ -200,7 +200,7 @@ jobs:
           compiler: gcc
           version: 12
       - name: Setup pandoc 
-        uses: r-lib/actions/setup-pandoc@v1
+        uses: r-lib/actions/setup-pandoc@v2
       - name: Get NONMEM
         id: cache-nonmem
         uses: actions/cache@v4
