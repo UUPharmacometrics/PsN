@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2024-12-15}
+\guidetitle{VPC and NPC user guide}{2025-05-08}
 \usepackage{hyperref}
 \begin{document}
 
@@ -239,7 +239,7 @@ Perform prediction correction of dependent variable values. Specific for vpc. If
 A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
 \nextopt
 \optdefault{refcorr}
-Perform reference correction on dependent variable values before computing
+Perform reference correction\cite{Ibrahim4} on dependent variable values before computing
 vpc results. The option takes a comma separated list of equals separated pairs
 of column names and reference values. If used together with -refcorr\_data no
 pairs should be specified.
