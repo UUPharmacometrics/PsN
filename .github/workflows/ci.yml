@@ -273,22 +273,22 @@ jobs:
           run: tar -zxvf PsN-*.tar.gz
           shell: bash
         - name: Download Strawberry Perl
-          uses: suisei-cn/actions-download-file@v1
+          uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 # 1.6.0
           with:
             url: http://strawberryperl.com/download/5.22.3.1/strawberry-perl-5.22.3.1-64bit-portable.zip
             target: downloads/
         - name: Download R
-          uses: suisei-cn/actions-download-file@v1
+          uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 # 1.6.0
           with:
             url: https://cran.r-project.org/bin/windows/base/R-4.5.0-win.exe
             target: downloads/
         - name: Download Python
-          uses: suisei-cn/actions-download-file@v1
+          uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 # 1.6.0
           with:
             url: https://github.com/winpython/winpython/releases/download/7.0.20231126final/Winpython64-3.11.6.0dot.exe
             target: downloads/
         - name: Download Pandoc
-          uses: suisei-cn/actions-download-file@v1
+          uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 # 1.6.0
           with:
             url: https://github.com/jgm/pandoc/releases/download/2.5/pandoc-2.5-windows-i386.zip
             target: downloads/
