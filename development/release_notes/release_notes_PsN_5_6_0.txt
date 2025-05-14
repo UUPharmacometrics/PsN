@@ -1,0 +1,12 @@
+*********************************************
+Changes and bug fixes from PsN 5.5.0 to 5.6.0
+*********************************************
+
+
+   ___qa___
+
+* Fix issue causing frem to crash in the post processing
+   
+   ___scm___
+
+* Add new option -one_model_per_covariate that creates on model for each covariate put on all relevant parameters
