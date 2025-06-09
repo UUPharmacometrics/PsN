@@ -263,7 +263,7 @@ jobs:
 
   build-windows:
       needs: build
-      runs-on: windows-2019
+      runs-on: windows-2022
       steps:
         - name: Download installation tarball
           uses: actions/download-artifact@v4
@@ -508,7 +508,7 @@ jobs:
 
   test-windows:
     needs: [build-windows, get-nonmem]
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - name: Download installation tarball
         uses: actions/download-artifact@v4
