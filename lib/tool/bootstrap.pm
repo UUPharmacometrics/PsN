@@ -1765,12 +1765,6 @@ sub prepare_results
             push( @{$self -> results->[$i]{'own'}},\%return_section );
         }
     }
-
-    my $directory = $self->directory;
-    PsN::call_pharmpy("psn bootstrap $directory");
-    if ($self->rplots > 0) {
-        PsN::call_pharmpy("psn report $directory");
-    }
 }
 
 sub create_R_plots_code
