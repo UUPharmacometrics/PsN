@@ -688,6 +688,9 @@ sub _read_iteration_path
                 $self -> finished_parsing(1);
                 last;
             }
+            if (/0SADDLE POINT RESET/) {
+                next;
+            }
             last unless(/^0ITERATION NO/);
         }            #End of if iteration no
     }            #End of large reading loop
