@@ -7,6 +7,10 @@ Changes and bug fixes from PsN 5.6.0 to
 * Let gradient parser continue after a saddle reset. The parser would stop at the last iteration before the reset giving potentially bad final zero gradients and zero gradient reports in sumo
 
 
+   ___update_inits___
+
+* Handle update of tables also if "file=" was written in lowercase in $TABLE
+
    ___qa___
 
    

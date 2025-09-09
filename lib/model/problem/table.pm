@@ -14,7 +14,7 @@ sub renumber_file{
 
     my @options = defined($self->options) ? @{$self->options} : ();
     foreach my $opt (@options){
-        if ($opt->name =~ /^\s*FIL/  and (defined $opt->value and $opt->value ne '')){
+        if ($opt->name =~ /^\s*FIL/i  and (defined $opt->value and $opt->value ne '')){
             my $line = $opt->value;
             #everything up to but not including optional dot
             $line =~ s/[0-9]+[^0-9.]*/$numberstring/ ;
