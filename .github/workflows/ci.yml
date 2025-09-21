@@ -280,7 +280,7 @@ jobs:
         - name: Download R
           uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 # 1.6.0
           with:
-            url: https://cran.r-project.org/bin/windows/base/R-4.5.0-win.exe
+            url: https://cran.r-project.org/bin/windows/base/R-4.5.1-win.exe
             target: downloads/
         - name: Download Python
           uses: suisei-cn/actions-download-file@818d6b7dc8fe73f2f924b6241f2b1134ca1377d9 # 1.6.0
@@ -407,7 +407,7 @@ jobs:
             }
             echo "c:\\rtools40\\usr\\bin" >> $GITHUB_PATH
         - name: Install R
-          run: downloads\R-4.5.0-win.exe /VERYSILENT /DIR="installer\R"
+          run: downloads\R-4.5.1-win.exe /VERYSILENT /DIR="installer\R"
           shell: cmd
         - name: Install renv
           run: |
