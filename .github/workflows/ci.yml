@@ -548,15 +548,20 @@ jobs:
         shell: bash
       - name: Find tests
         run: |
-          export PSNPATH=$(find $PWD -maxdepth 1 -type d -name 'PsN-*')
+          export PSNPATH=$(/usr/bin/find "$PWD" -maxdepth 1 -type d -name 'PsN-*' | head -n1)
           export PSNPATH=C:${PSNPATH:2}
-          export TESTPATH=$(find $PSNPATH -type d -name 'PsN_test_[0-9]*')
+          export TESTPATH=$(/usr/bin/find "$PSNPATH" -type d -name 'PsN_test_[0-9]*' | head -n1)
           export TESTPATH=C:${TESTPATH:2}
-          export LIBPATH=$(find $PSNPATH -type d -name 'PsN_[0-9]*')
+          export LIBPATH=$(/usr/bin/find $PSNPATH -type d -name 'PsN_[0-9]*' | head -n1)
           export LIBPATH=C:${LIBPATH:2}
           echo PSNPATH=$PSNPATH
           echo TESTPATH=$TESTPATH
           echo LIBPATH=$LIBPATH
+          echo "DIAGNOSTICS"
+          which find
+          echo "$PWD"
+          ls -la "$PWD"
+          /usr/bin/find "$PWD" -maxdepth 1 -type d -name 'PsN-*' -print -ls || true
           echo "PSNPATH=$PSNPATH" >> $GITHUB_ENV
           echo "TESTPATH=$TESTPATH" >> $GITHUB_ENV
           echo "LIBPATH=$LIBPATH" >> $GITHUB_ENV
