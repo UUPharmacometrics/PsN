@@ -542,7 +542,7 @@ jobs:
         run: |
           export PSNPATH=$(find . -type d -name 'PsN_[0-9]*')
           export NMPATH=$(realpath nm751)
-          export NMPATH=C:${NMPATH:2}
+          export NMPATH=D:${NMPATH:2}
           sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.5.1" $PSNPATH/psn.conf
           cat $PSNPATH/psn.conf
         shell: bash
