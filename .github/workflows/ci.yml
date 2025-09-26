@@ -549,10 +549,10 @@ jobs:
       - name: Find tests
         run: |
           export PSNPATH=$(/usr/bin/find "$PWD" -maxdepth 1 -type d -name 'PsN-*' | head -n1)
-          export PSNPATH=C:${PSNPATH:2}
           export TESTPATH=$(/usr/bin/find "$PSNPATH" -type d -name 'PsN_test_[0-9]*' | head -n1)
+          export LIBPATH=$(/usr/bin/find "$PSNPATH" -type d -name 'PsN_[0-9]*' | head -n1)
+          export PSNPATH=C:${PSNPATH:2}
           export TESTPATH=C:${TESTPATH:2}
-          export LIBPATH=$(/usr/bin/find $PSNPATH -type d -name 'PsN_[0-9]*' | head -n1)
           export LIBPATH=C:${LIBPATH:2}
           echo PSNPATH=$PSNPATH
           echo TESTPATH=$TESTPATH
