@@ -1057,6 +1057,8 @@ sub do_model1
          model => { isa => 'Ref', optional => 0 }
     );
     my $model = $parm{'model'};
+                    
+    $model->remove_records(type => 'table');
 
     my $model1_name = 'model_1.mod';
     my $model_path = File::Spec->catfile($self->_intermediate_models_path, $model1_name);
