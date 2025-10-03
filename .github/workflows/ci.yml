@@ -239,7 +239,7 @@ jobs:
         run: cd PsN-Source; perl setup.pl -auto
       - name: Update psn.conf
         run: |
-          export PSNPATH=$(find /usr/local/Cellar/perl/ -type d -name 'PsN_[0-9]*')
+          export PSNPATH=$(find /opt/homebrew/Cellar/perl/ -type d -name 'PsN_[0-9]*')
           export NMPATH=$(realpath nm751)
           sudo gsed -i "/\\[nm_versions\\]/a default=$NMPATH,7.5.1" $PSNPATH/psn.conf
       - name: Run unit tests
