@@ -244,14 +244,14 @@ jobs:
           sudo gsed -i "/\\[nm_versions\\]/a default=$NMPATH,7.5.1" $PSNPATH/psn.conf
       - name: Run unit tests
         run: |
-          export TESTPATH=$(find /usr/local/Cellar/perl/ -type d -name 'PsN_test_[0-9]*')
+          export TESTPATH=$(find /opt/homebrew/Cellar/perl/ -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j8 unit
       - name: Save TMPDIR
         run: echo "TEMPDIR=$TMPDIR" >> $GITHUB_ENV
       - name: Run system tests
         run: |
-          export TESTPATH=$(find /usr/local/Cellar/perl/ -type d -name 'PsN_test_[0-9]*')
+          export TESTPATH=$(find /opt/homebrew/Cellar/perl/ -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j4 system
       - name: Upload failed system test directories artifact
