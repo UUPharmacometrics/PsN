@@ -531,6 +531,11 @@ jobs:
         env:
           LICENSE_KEY: ${{secrets.LICENSE_KEY}}
         shell: bash
+      - name: Setup gfortran
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: 12
       - name: Install NONMEM
         run: |
           set PATH=installer\strawberry\c\bin\;%PATH%
