@@ -644,6 +644,7 @@ sub modelfit_setup
             );
             $cdd->run();
             $cdd->prepare_results();
+            PsN::call_pharmpy("psn cdd cdd_run");      # Generate results.json and results.csv
        };
         if ($@) {
             print $@;
