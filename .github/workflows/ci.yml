@@ -312,7 +312,7 @@ jobs:
               installer\python\python-3.11.6.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
           shell: cmd
         - name: Install Pharmpy
-          run: installer/python/python-3.11.6.amd64/python.exe -m pip install PsN-Source/pharmpy-core*.zip
+          run: installer/python/python-3.11.6.amd64/python.exe -m pip install PsN-Source/pharmpy*.whl
           shell: bash
         - name: Move phampy executables
           run: |
