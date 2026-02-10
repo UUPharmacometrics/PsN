@@ -151,10 +151,4 @@ sub modelfit_setup
     }
 }
 
-sub prepare_results
-{
-    my $self = shift;
-    PsN::call_pharmpy("psn linearize " . $self->directory);      # Generate results.json and results.csv
-}
-
 1;

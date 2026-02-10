@@ -262,6 +262,7 @@ sub modelfit_setup
         $linearize->run();
         $linearize->prepare_results();
         $linearize->print_results();
+        PsN::call_pharmpy("psn linearize linearize_run");      # Generate results.json and results.csv
         ui->category('qa');
 
         common_options::set_option('nm_output', $old_nm_output);
