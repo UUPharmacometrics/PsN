@@ -223,8 +223,8 @@ release: main rel_dir $(RELFILES) $(PDFFILES)
 	sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
 	cp -ar PsNR PsN-Source
 	ls pharmpy
-	cd pharmpy; tox -e plain -- pharmpy --version
-	cp pharmpy/.tox/dist/*.zip PsN-Source/
+	cd pharmpy; python3 -m build
+	cp pharmpy/dist/*.whl PsN-Source/
 	cp pharmpy/requirements.txt PsN-Source/
 	tar czf $(TARFILE) PsN-Source/
 

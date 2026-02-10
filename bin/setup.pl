@@ -953,7 +953,7 @@ if (not running_on_windows()) {
         } else {
             $venv_python = "$python_lib_path/bin/python";
         }
-        my $pharmpy_file = (glob("pharmpy-core*.zip"))[0];
+        my $pharmpy_file = (glob("pharmpy*.whl"))[0];
         system("$venv_python -m pip install wheel");
         system("$venv_python -m pip install -r requirements.txt");
         system("$venv_python -m pip install $pharmpy_file --upgrade --no-deps --force-reinstall");
