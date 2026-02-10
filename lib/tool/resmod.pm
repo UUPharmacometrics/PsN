@@ -962,12 +962,6 @@ sub _delete_extra_fortran_files
     unlink('contr.txt', 'ccontra.txt');
 }
 
-sub prepare_results
-{
-    my $self = shift;
-    PsN::call_pharmpy("psn ruvsearch " . $self->directory);      # Generate results.json and results.csv
-}
-
 # This array of hashes represent the different models to be tested.
 our @residual_models =
 (

@@ -260,7 +260,6 @@ sub modelfit_setup
         );
 
         $linearize->run();
-        $linearize->prepare_results();
         $linearize->print_results();
         PsN::call_pharmpy("psn linearize linearize_run");      # Generate results.json and results.csv
         ui->category('qa');
@@ -700,7 +699,7 @@ sub modelfit_setup
             if (not $@) {
                 eval {
                     $resmod_time->run();
-                    $resmod_time->prepare_results();
+                    PsN::call_pharmpy("psn ruvsearch resmod_TIME");      # Generate results.json and results.csv
                 };
             } else {
                 print $@;
@@ -728,7 +727,7 @@ sub modelfit_setup
             if (not $@) {
                 eval {
                     $resmod_tad->run();
-                    $resmod_tad->prepare_results();
+                    PsN::call_pharmpy("psn ruvsearch resmod_TAD");      # Generate results.json and results.csv
                 };
             } else {
                 print $@;
@@ -756,7 +755,7 @@ sub modelfit_setup
         if (not $@) {
             eval {
                 $resmod_pred->run();
-                $resmod_pred->prepare_results();
+                PsN::call_pharmpy("psn ruvsearch resmod_PRED");      # Generate results.json and results.csv
             };
         } else {
             print $@;
@@ -783,7 +782,7 @@ sub modelfit_setup
             if (not $@) {
                 eval {
                     $resmod_idv->run();
-                    $resmod_idv->prepare_results();
+                    PsN::call_pharmpy("psn ruvsearch " . 'resmod_'.$self->idv);      # Generate results.json and results.csv
                 };
             } else {
                 print $@;
