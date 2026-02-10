@@ -664,6 +664,7 @@ sub modelfit_setup
                 top_tool => 1,
             );
             $simeval->run();
+            PsN::call_pharmpy("psn simeval simeval_run");      # Generate results.json and results.csv
         };
         if ($@) {
             print $@;

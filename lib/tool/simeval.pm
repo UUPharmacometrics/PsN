@@ -597,7 +597,6 @@ sub modelfit_analyze
     $self->subjects($subjects);
     $self->skipped_residuals($skipped_residuals);
     my $directory = $self->directory;
-    PsN::call_pharmpy("psn simeval $directory");      # Generate results.json and results.csv
 }
 
 sub simeval_analyze
