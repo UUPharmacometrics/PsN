@@ -887,6 +887,8 @@ sub general_setup
                     write_copy => 0,
                     copy_output => 0
                 );
+                # All but last table gets overwritten anyway
+                $newmodel->remove_records(type => 'table');
                 if ($self->ignore) {        # Check if we need to reverse INPUT and DATA
                     my $need_swap = 0;
                     my $found_input;
