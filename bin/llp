@@ -24,7 +24,6 @@ my %required_options = ( "thetas:s"=>'theta list',
 
 my %optional_options = ( "max_iterations:i" => '',
              "normq:f" => '',
-             "outputfile:s" => '',
              "ofv_increase:f" => '',
              "significant_digits:i" => '',
              "rse_thetas:s" => 'theta rel. SE list',
@@ -135,16 +134,6 @@ $help_text{-omegas} = <<'EOF';
     initial values in the model file. For example, if first there is a block record
     with size 2 (3 initial values) and then there is a diagonal record with size 3,
     then the numbers 4,5 and 6 refer to the diagonal elements.
-EOF
-
-$help_text{-outputfile} = <<'EOF';
-    -outputfile=filename
-
-    The name of the NONMEM output file. The default value is the name of the model
-    file with the extension substituted with '.lst'.
-      Example: if the modelfile is run89.mod, llp will by default look for the
-      outputfile run89.lst. If the name of the output file does not follow this
-      standard, the name must be specifed with this option.
 EOF
 
 $help_text{-rse_omegas} = <<'EOF';
