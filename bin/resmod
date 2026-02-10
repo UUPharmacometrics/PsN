@@ -200,7 +200,6 @@ $resmod->print_options(
 );
 
 $resmod->run();
-$resmod->prepare_results();
 $resmod->print_results();
 
 ui -> print(category => 'resmod', message  => "Residual modelling done.\n");

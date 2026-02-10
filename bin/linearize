@@ -191,7 +191,6 @@ my $linearize = tool::linearize->new(
 );
 
 $linearize->run();
-$linearize->prepare_results();
 $linearize->print_results();
 
 $linearize->print_options(
