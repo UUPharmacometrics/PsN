@@ -15,7 +15,8 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt update
-          sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-plain-generic biber texlive-bibtex-extra texlive-science texlive-font-utils texlive-pictures python3-build
+          sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-plain-generic biber texlive-bibtex-extra texlive-science texlive-font-utils texlive-pictures
+          pip3 install build
       - name: make
         run: make
       - name: make release
