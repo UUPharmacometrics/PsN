@@ -66,7 +66,6 @@ my %optional_options = ( 'idv:s' => undef,
     "copy_data!"=>undef,
     'auto_bin:s' => undef,
     'min_points_in_bin:i' => undef,
-    'so!' => undef,
     'mix!' => undef,
     'refcorr:s' => undef,
     'refcorr_data:s' => undef,
@@ -577,13 +576,6 @@ $help_text{-single_bin_size} = <<'EOF';
     binning interval, depending on whether the option -bin_by_count is 1 or 0.
     If used, the option -bin_by_count is required and -overlap_percent is
     optional, while all other binning options are forbidden.
-EOF
-
-$help_text{-so} = <<'EOF';
-    -so
-
-    Default not set. Create a standard output xml file containing the original
-    table and the simulated tables.
 EOF
 
 $help_text{-stratify_on} = <<'EOF';
