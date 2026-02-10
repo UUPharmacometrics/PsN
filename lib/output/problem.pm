@@ -1108,17 +1108,27 @@ sub is_timestamp
     my $line1 = $arrayref->[$index];
     my $is_time = 0;
     my $seconds = undef;
-    my ($wday, $mon, $mday, $tt, $zone, $year, $hour, $min, $sec);
+    my ($wday, $mon, $mday, $tt, $zone, $year, $hour, $min, $sec, $ampm);
     if ($line1 =~ /^\s*(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/) {
         $is_time = 1;
         my %months = ('Jan'=> 0,'Feb' => 1, 'Mar' => 2, 'Apr' => 3, 'May' => 4, 'Jun' => 5,
                       'Jul' => 6, 'Aug' => 7, 'Sep' => 8, 'Oct' => 9, 'Nov' => 10, 'Dec' => 11);
 
         $line1 =~ s/\s*$//; #remove trailing spaces
-        ($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $line1);
+        ($wday, $mon, $mday, $tt, $ampm, $zone, $year) = split(/\s+/, $line1);
         $mon = $months{$mon}; #convert to numeric
         ($hour, $min, $sec) = split(':',$tt);
-    }elsif ($line1 =~ /^(\d\d)\/(\d\d)\/(\d\d\d\d)\s*$/)  {
+        if ($ampm eq "AM" or $ampm eq "PM") {
+            if ($hour == 12 and $ampm eq "AM") {
+                $hour = 0;
+            } elsif ($hour < 12 and $ampm eq "PM") {
+                $hour = $hour + 12;
+            }
+        } else {
+            $year = $zone;  
+            $zone = $ampm;
+        }
+    } elsif ($line1 =~ /^(\d\d)\/(\d\d)\/(\d\d\d\d)\s*$/) {
         # Alternative date format: dd/mm/yyyy\nhh:mm
         $year = $3;
         $mon = $2 - 1;
