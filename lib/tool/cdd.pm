@@ -612,7 +612,7 @@ sub modelfit_results
                                     print "Instance\t$l\n";
                                     my $orig = $orig_raw_results[$i][$j][$k][$l];
                                     my $res  = $raw_results[$i][$i2][$j][$k][$l];
-                                    if( defined $orig and ! $orig == 0 ) {
+                                    if( defined $orig and $orig != 0 ) {
                                         print "ORIGINAL $orig\n";
                                         print "SUBSET   $res\n";
                                         print "RELATIVE ",$res/$orig,"\n";
@@ -630,7 +630,7 @@ sub modelfit_results
                                 print "One instance per problem\n";
                                 my $orig = $orig_raw_results[$i][$j][$k];
                                 my $res  = $raw_results[$i][$i2][$j][$k];
-                                if( defined $orig and ! $orig == 0 ) {
+                                if( defined $orig and $orig != 0 ) {
                                     print "ORIGINAL $orig\n";
                                     print "SUBSET   $res\n";
                                     print "RELATIVE ",$res/$orig,"\n";
@@ -653,7 +653,7 @@ sub modelfit_results
                         print "One instance per problem\n";
                         my $orig = $orig_raw_results[$i][$j];
                         my $res  = $raw_results[$i][$i2][$j];
-                        if( defined $orig and ! $orig == 0 ) {
+                        if( defined $orig and $orig != 0 ) {
                             print "ORIGINAL $orig\n";
                             print "SUBSET   $res\n";
                             print "RELATIVE ",$res/$orig,"\n";
