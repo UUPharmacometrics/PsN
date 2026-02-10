@@ -18,7 +18,7 @@ use File::Copy 'copy';
 use Cwd;
 use Config;
 use OSspecific;
-use File::Spec qw(catfile);
+use File::Spec;
 
 #test for data class subroutine for frem dataset generation
 #TODO add checks of contents of findme.dta (data2name file)

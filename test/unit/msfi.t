@@ -16,7 +16,7 @@ use model::problem;
 use model;
 use Cwd;
 use OSspecific;
-use File::Spec qw(catfile);
+use File::Spec;
 
 my $tempdir = create_test_dir('unit_msfi');
 #chdir($tempdir);
