@@ -549,8 +549,8 @@ if ( $options{'output_model'} ){
     $outfile = $options{'output_model'};
 }  else {
     #original file will be overwritten, copy to .org
-    copy( $ARGV[0], $ARGV[0].'.org' );
-    unlink($ARGV[0]);
+    #copy( $ARGV[0], $ARGV[0].'.org' );
+    #unlink($ARGV[0]);
     $outfile = $ARGV[0];
 }
 
@@ -800,6 +800,11 @@ if (defined $options{'output_model'} and $options{'output_model'} ne $ARGV[0]) {
 
 if (defined $options{'comment'}) {
     $model_copy->problems->[0]->problems->[0]->add_comment(new_comment => $options{'comment'});
+}
+
+unless ($options{'output_model'}) {
+    copy($ARGV[0], $ARGV[0].'.org');
+    unlink($ARGV[0]);
 }
 
 $model_copy->_write(number_format => $options{'sigdig'});
