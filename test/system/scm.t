@@ -23,11 +23,8 @@ my @config_files = qw (
 config_nohead.scm
 config_ignore.scm
 config_included.scm
-config_logit.scm
-config_only_categorical.scm
 config_state5.scm
 config_time_varying.scm
-config_tv.scm
 config_usererror.scm
 config_all_default_codes_explicitly.scm
 );

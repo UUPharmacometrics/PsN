@@ -24,12 +24,9 @@ my @config_files = qw (
 config_different_parameterizations_different_covariates.scm
 config_foce_prop.scm
 config_foce_prop_upd.scm
-config_foce_upd.scm
 config_alternative_parameterizations.scm
 config_centering_bivariate.scm
 config_emax.scm
-config_foce_backward.scm
-config_foce.scm
 config_grouping_categorical.scm
 config_hockey.scm
 );

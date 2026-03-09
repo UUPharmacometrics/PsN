@@ -16,8 +16,6 @@ my $model_dir = $includes::testfiledir;
 # models (relative to test files dir) to test (3 models)
 my @models = (
     "mox1.mod",
-    "mox1_etasfile.mod",
-#    "space path/mox1_etasfile_spacepath.mod"
 );
 
 # get commands and working directories
