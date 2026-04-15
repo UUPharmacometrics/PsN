@@ -44,7 +44,6 @@ my $resultref = data::frem_compute_covariate_properties(filtered_data => $filter
 													 mdv_index => undef,
 													 dv_index => 3,
 													 type_index => 5,
-													 N_parameter_blocks => 1,
 													 cov_indices => [4], #WT
 													 is_log => [0]);
 
@@ -69,7 +68,6 @@ $resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_
 														mdv_index => undef,
 														dv_index => 30,
 														type_index => 33,
-														N_parameter_blocks => 1,
 														cov_indices => [12,3,14], #SEX DGRP WT
 														is_log => [0,0,0],
 														first_timevar_type => 2);    #index 3 in cov_indices
@@ -98,7 +96,6 @@ $resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_
 													 mdv_index => undef,
 													 dv_index => 30,
 													 type_index => 33,
-													 N_parameter_blocks => 1,
 													 cov_indices => [12,3], #SEX DGRP
 													 is_log => [0,0]);
 

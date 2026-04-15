@@ -53,7 +53,6 @@ my ($labels,$thetas,$code,$pkcode) = tool::frem::get_pred_error_pk_code(covariat
                                                                         invariant_mean => [54.4, 0, 89.5],
                                                                         estimate_mean => [0,0,0],
                                                                         ntheta => 5,
-                                                                        N_parameter_blocks => 1,
                                                                         epsnum => 2,
                                                                         indent => ' ');
 is_deeply($pkcode,[],'get_pred_error_pk_code eta pkcode');
@@ -91,7 +90,6 @@ is_deeply($code,\@errcode,'get_pred_error_pk_code code');
                                                                         invariant_mean => [54.4, 0, 89.5],
                                                                         estimate_mean => [0,0,0],
                                                                         ntheta => 5,
-                                                                        N_parameter_blocks => 1,
                                                                         epsnum => 2,
                                                                      indent => ' ');
 my @mucode=(
@@ -139,7 +137,6 @@ is_deeply($code,\@errcode,'get_pred_error_pk_code code mu pk');
                                                                      invariant_mean => [54.4, 0, 89.5],
                                                                      estimate_mean => [1,1,0],
                                                                      ntheta => 5,
-                                                                     N_parameter_blocks => 1,
                                                                      epsnum => 2,
                                                                      indent => ' ');
 is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_pk_code eta labels 2');
@@ -181,7 +178,6 @@ is_deeply($code,\@errcode,'get_pred_error_pk_code code 2');
                                                                      invariant_mean => [54.4, 0, 89.5],
                                                                      estimate_mean => [1,1,0],
                                                                      ntheta => 5,
-                                                                     N_parameter_blocks => 1,
                                                                      epsnum => 2,
                                                                      indent => ' ');
 is_deeply($pkcode,[],'get_pred_error_pk_code eta pkcode mu pred rescale');

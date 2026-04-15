@@ -1337,14 +1337,12 @@ sub do_frem_dataset
         filtered_data => { isa => 'data', optional => 0 },
         indices => { isa => 'HashRef', optional => 0 },
         mod1_ofv => { isa => 'Num', optional => 0 },
-        N_parameter_blocks => {isa => 'Int', optional => 0},
         fremdataname => { isa => 'Str', optional => 0 },
     );
     my $model = $parm{'model'};
     my $mod1_ofv = $parm{'mod1_ofv'};
     my $indices = $parm{'indices'};
     my $filtered_data = $parm{'filtered_data'};
-    my $N_parameter_blocks = $parm{'N_parameter_blocks'};
     my $fremdataname = $parm{'fremdataname'};
 
     my $do_check = $self->check;
@@ -1358,7 +1356,6 @@ sub do_frem_dataset
     my $resultref = data::frem_compute_covariate_properties(
         filtered_data => $filtered_data,
         invariant_covariates => $self->covariates,
-        N_parameter_blocks => $N_parameter_blocks,
         is_log => $indices->{'is_log'},
         occ_index => undef,
         directory => $self->directory,
@@ -1441,7 +1438,6 @@ sub get_pred_error_pk_code
         invariant_mean => { isa => 'ArrayRef', optional => 0 },
         estimate_mean => { isa => 'ArrayRef', optional => 0 },
         ntheta => {isa => 'Int', optional => 0},
-        N_parameter_blocks => {isa => 'Int', optional => 0},
         epsnum => {isa => 'Int', optional => 0},
         indent => {isa => 'Str', optional => 0},
         likelihood => { isa => 'Bool', default => 0},
@@ -1458,7 +1454,6 @@ sub get_pred_error_pk_code
     my $invariant_mean = $parm{'invariant_mean'};
     my $estimate_mean = $parm{'estimate_mean'};
     my $ntheta = $parm{'ntheta'};
-    my $N_parameter_blocks = $parm{'N_parameter_blocks'};
     my $epsnum = $parm{'epsnum'};
     my $indent = $parm{'indent'};
     my $likelihood = $parm{'likelihood'};
@@ -1556,25 +1551,20 @@ sub get_pred_error_pk_code
     }
 
     for (my $i=0; $i< scalar(@{$covariates}); $i++){
-        for (my $j=0; $j< $N_parameter_blocks; $j++){
-            my $comment = ';'.$indent.'  '.$covariates->[$i].'  '.$rescale_factors[$i];
-            my $ipred;
-            if ($mu){ #no iov handled
-                $ipred = 'COV'.($maxeta+1+$i);
-            }else{
-                my $rescale_expr = $rescale ? '*'.$rescale_strings[$i] : '';
-                $ipred = $theta_strings[$i] . ' + ' . $eta_strings[$i]->[$j] . $rescale_expr . $ntrt;
-            }
-            if ($N_parameter_blocks > 1){
-                $comment .= ' occasion '.($j+1);
-            }
-            my $num = 100*($i+1)+$j;
-            push(@pred_error_code,$indent.'IF ('.$fremtype.'.EQ.'.$num.') THEN' );
-            push(@pred_error_code,$comment);
-            push(@pred_error_code,$indent.'   Y = '.$ipred.' + EPS('.$epsnum.')' );
-            push(@pred_error_code,$indent.'   IPRED = '.$ipred );
-            push(@pred_error_code,$indent.'END IF' );
+        my $comment = ';'.$indent.'  '.$covariates->[$i].'  '.$rescale_factors[$i];
+        my $ipred;
+        if ($mu){ #no iov handled
+            $ipred = 'COV'.($maxeta+1+$i);
+        }else{
+            my $rescale_expr = $rescale ? '*'.$rescale_strings[$i] : '';
+            $ipred = $theta_strings[$i] . ' + ' . $eta_strings[$i]->[0] . $rescale_expr . $ntrt;
         }
+        my $num = 100*($i+1);
+        push(@pred_error_code,$indent.'IF ('.$fremtype.'.EQ.'.$num.') THEN' );
+        push(@pred_error_code,$comment);
+        push(@pred_error_code,$indent.'   Y = '.$ipred.' + EPS('.$epsnum.')' );
+        push(@pred_error_code,$indent.'   IPRED = '.$ipred );
+        push(@pred_error_code,$indent.'END IF' );
     }
     push(@pred_error_code,';;;FREM CODE END COMPACT' );
 
@@ -1630,7 +1620,6 @@ sub prepare_model2
         invariant_mean => $invariant_mean,
         estimate_mean => \@estimate_mean,
         ntheta => $ntheta,
-        N_parameter_blocks => 1,
         epsnum => $epsnum,
         indent => '    ',
         likelihood => $self->_likelihood,
@@ -2475,7 +2464,6 @@ sub modelfit_setup
     my $frem_datasetname = 'frem_dataset.dta';
     my $covresultref = $self->do_frem_dataset(
         model => $model, #must be input model here, not updated with final ests
-        N_parameter_blocks => 1,
         filtered_data => $filtered_data,
         indices => $indices,
         mod1_ofv => $mod1_ofv,

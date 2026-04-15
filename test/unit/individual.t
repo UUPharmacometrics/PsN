@@ -60,7 +60,6 @@ $ind = data::individual->new(idcolumn => 1, subject_data => ['1,4.02,0,0.74,79.6
 
 is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[]),[79.6,0],'baseline factor nomdv');
 $ind->add_frem_lines(type_index => 5,
-					 N_parameter_blocks => 1,
 					 dv_index => 3,
 					 cov_indices => [4],
 					 is_log => [0],
@@ -75,46 +74,16 @@ $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0,1,0,70,1,35,0'
 																'1,34,0,10,70,1,35,0',
 																'1,21,0,20,70,1,35,0']);
 
-is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[2]),[70],'baseline factor 1');
-is_deeply($ind->factor_list(column => 2,mdv_evid_indices =>[2]),[34,21],'baseline factor 2');
-
-$ind->add_frem_lines(type_index => 7,
-					 N_parameter_blocks => 2,
-					 mdv_index => 2,
-					 dv_index => 1,
-					 cov_indices => [4,6],
-					 is_log => [0,0],
-					 first_timevar_type => 2);
-
-my $ans = [
-	[1,70,0,10,70,1,35,100],
-	[1,70,0,10,70,1,35,101],
-	[1,35,0,10,70,1,35,200],
-	[1,35,0,10,70,1,35,201]];
-
-is($ind->subject_data->[0],'1,0,1,0,70,1,35,0', "add_frem_lines 0");
-is($ind->subject_data->[1], join(',',@{$ans->[0]}), "add_frem_lines 0");
-is($ind->subject_data->[2], join(',',@{$ans->[1]}), "add_frem_lines 1");
-is($ind->subject_data->[3], join(',',@{$ans->[2]}), "add_frem_lines 2");
-is($ind->subject_data->[4], join(',',@{$ans->[3]}), "add_frem_lines 3");
-is($ind->subject_data->[5],'1,34,0,10,70,1,35,0', "add_frem_lines 4");
-is($ind->subject_data->[6],'1,21,0,20,70,1,35,0', "add_frem_lines 5");
-
-$ind = data::individual->new(idcolumn => 1, subject_data => ['1,0,1,0,70,1,35,0', 
-																'1,34,0,10,70,1,35,0',
-																'1,21,0,20,70,1,35,0']);
-
 is_deeply($ind->factor_list(column => 4,mdv_evid_indices =>[2]),[10,20],'baseline factor 3');
 
 $ind->add_frem_lines(type_index => 7,
-					 N_parameter_blocks => 1,
 					 mdv_index => 2,
 					 dv_index => 1,
 					 cov_indices => [4,6],
 					 is_log => [0,1],
 					 first_timevar_type => 2);
 
-$ans = [
+my $ans = [
 	[1,70,0,10,70,1,35,100],
 	[1,log(35),0,10,70,1,35,200]];
 
@@ -131,7 +100,6 @@ $ind = data::individual->new(idcolumn => 1, subject_data => [   '1,0,1,0,70,1,35
 is_deeply($ind->factor_list(column => 4,mdv_evid_indices =>[2]),[],'factor list no observations');
 
 my ($ref1,$ref2) = $ind->add_frem_lines(type_index => 7,
-										N_parameter_blocks => 1,
 										mdv_index => 2,
 										dv_index => 1,
 										cov_indices => [4,6],
@@ -150,7 +118,6 @@ is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[2]),[-99,70],'baseli
 is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[0]),[],'baseline factor 5');
 
 ($ref1,$ref2) = $ind->add_frem_lines(type_index => 7,
-										N_parameter_blocks => 1,
 										mdv_index => 2,
 										dv_index => 1,
 										cov_indices => [4,5],

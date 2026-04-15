@@ -407,7 +407,6 @@ sub frem_compute_covariate_properties
     #one unit test in data_extra.t
     my %parm = validated_hash(\@_,
         filtered_data => { isa => 'data', optional => 0 },
-        N_parameter_blocks => { isa => 'Int', optional => 0 },
         invariant_covariates => { isa => 'ArrayRef', optional => 0},
         is_log => { isa => 'ArrayRef', optional => 0},
         occ_index => { isa => 'Maybe[Int]', optional => 1 },
@@ -423,7 +422,6 @@ sub frem_compute_covariate_properties
     );
     #ref of hash of cov names to column numbers
     my $filtered_data = $parm{'filtered_data'};
-    my $N_parameter_blocks = $parm{'N_parameter_blocks'};
     my $invariant_covariates =  $parm{'invariant_covariates'};
     my $is_log =  $parm{'is_log'};
     my $occ_index = $parm{'occ_index'};
@@ -476,7 +474,6 @@ sub frem_compute_covariate_properties
         type_index => $type_index,
         cov_indices => $cov_indices,
         is_log => $is_log,
-        N_parameter_blocks => $N_parameter_blocks,
         first_timevar_type => $first_timevar_type,
         l2_index => $l2_index);
 
@@ -535,7 +532,6 @@ sub add_frem_lines
     my $self = shift;
     my %parm = validated_hash(\@_,
         type_index => { isa => 'Int', optional => 0 },
-        N_parameter_blocks => { isa => 'Int', optional => 0 },
         occ_index => { isa => 'Maybe[Int]', optional => 1 },
         evid_index => { isa => 'Maybe[Int]', optional => 1 },
         mdv_index => { isa => 'Maybe[Int]', optional => 1 },
@@ -546,7 +542,6 @@ sub add_frem_lines
         l2_index => { isa => 'Maybe[Int]', optional => 1},
     );
     my $type_index = $parm{'type_index'};
-    my $N_parameter_blocks = $parm{'N_parameter_blocks'};
     my $occ_index = $parm{'occ_index'};
     my $evid_index = $parm{'evid_index'};
     my $mdv_index = $parm{'mdv_index'};
@@ -568,7 +563,6 @@ sub add_frem_lines
     foreach my $individual ( @{$self->individuals()} ) {
         my ($invariants,$timevar) =  $individual->add_frem_lines( occ_index => $occ_index,
                                                                   evid_index => $evid_index,
-                                                                  N_parameter_blocks => $N_parameter_blocks,
                                                                   missing_data_token => $self->missing_data_token(),
                                                                   mdv_index => $mdv_index,
                                                                   dv_index => $dv_index,

@@ -147,7 +147,6 @@ sub add_frem_lines
     my $self = shift;
     my %parm = validated_hash(\@_,
          type_index => { isa => 'Int', optional => 0 },
-         N_parameter_blocks => { isa => 'Int', optional => 0 },
          occ_index => { isa => 'Maybe[Int]', optional => 1 },
          mdv_index => { isa => 'Maybe[Int]', optional => 1 },
          dv_index => { isa => 'Int', optional => 0 },
@@ -159,7 +158,6 @@ sub add_frem_lines
          l2_index => { isa => 'Maybe[Int]', optional => 1 },        # Index of L2 column if present and undef if not
     );
     my $type_index = $parm{'type_index'};
-    my $N_parameter_blocks = $parm{'N_parameter_blocks'};
     my $occ_index = $parm{'occ_index'};
     my $mdv_index = $parm{'mdv_index'};
     my $dv_index = $parm{'dv_index'};
@@ -173,9 +171,6 @@ sub add_frem_lines
     my @invariant_values;
     my @timevar_values;
 
-    if ($N_parameter_blocks > 99){
-        croak("Not more than 99 parameter blocks supported");
-    }
     sub format_array{
         my $arr = shift;
         for (my $i=0; $i < scalar(@{$arr}); $i++){
@@ -240,17 +235,14 @@ sub add_frem_lines
                         $row[$mdv_index]=0 if (defined $mdv_index);
                         $row[$evid_index]=0 if (defined $evid_index) ;
 
-                        for (my $k= 0; $k<$N_parameter_blocks; $k++){
-                            #add one line per parameter block
-                            $row[$type_index] = ((100*($pos+1))+$k)  ; #fremtype value
-                            if (defined $l2_index) {
-                                $row[$l2_index] = $row[$type_index];
-                            }
-                            if ($format_data){
-                                format_array(\@row);
-                            }
-                            push(@newlines,join( ',', @row));
+                        $row[$type_index] = 100*($pos+1);  #fremtype value
+                        if (defined $l2_index) {
+                            $row[$l2_index] = $row[$type_index];
                         }
+                        if ($format_data){
+                            format_array(\@row);
+                        }
+                        push(@newlines,join( ',', @row));
                     }
                 }
                 $done_invariant = 1;
