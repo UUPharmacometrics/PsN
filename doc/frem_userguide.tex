@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2024-06-19}
+\guidetitle{FREM userguide}{2026-04-28}
 \usepackage{hyperref}
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -82,6 +82,10 @@ any means even if there are missing observations.
 \optdefault{force\_posdef\_samples}{500}
     The number of sampling tries before forcing parameter samples of frem matrix to be positive definite.
     Default is 500
+\nextopt
+\optname{keep\_ids\_noobs}
+    By default all individuals that have no observations will be removed in the FREM dataset. This option
+    keeps these individuals in the dataset and adds FREM records as for other individuals.
 \nextopt
 \optdefault{log}{list}
 Default empty. A comma-separated list of covariates	that should have the natural logarithm of the input data

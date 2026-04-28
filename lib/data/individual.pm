@@ -156,6 +156,8 @@ sub add_frem_lines
          is_log => { isa => 'ArrayRef', optional => 0 },
          first_timevar_type => { isa => 'Int', optional => 0 },
          l2_index => { isa => 'Maybe[Int]', optional => 1 },        # Index of L2 column if present and undef if not
+         amt_index => { isa => 'Maybe[Int]', optional => 1 },
+         keep_ids_noobs => { isa => 'Bool', optional => 1, default => 0 },
     );
     my $type_index = $parm{'type_index'};
     my $occ_index = $parm{'occ_index'};
@@ -167,6 +169,8 @@ sub add_frem_lines
     my $is_log = $parm{'is_log'};
     my $first_timevar_type = $parm{'first_timevar_type'};
     my $l2_index = $parm{'l2_index'};
+    my $amt_index = $parm{'amt_index'};
+    my $keep_ids_noobs = $parm{'keep_ids_noobs'};
 
     my @invariant_values;
     my @timevar_values;
@@ -207,6 +211,8 @@ sub add_frem_lines
         push(@timevar_matrix, []);
     }
 
+    my $all_noobs = 1;
+
     my %occasions = ();
     my $lastline = scalar(@data)-1;
     for ( my $i = 0; $i <= $lastline; $i++ ) {
@@ -215,8 +221,11 @@ sub add_frem_lines
         foreach my $index (@check_index){ #check that MDV and EVID are 0
             $not_obs = 1 unless ($data_row[$index] == 0);
         }
+        $all_noobs = 0 if $not_obs == 0;
+
         unless ($done_invariant){
-            unless ($not_obs) {
+
+            if (not $not_obs or ($keep_ids_noobs and $i == $lastline and $all_noobs)) {
                 #first loop over invariate covariates
                 for (my $pos=0; $pos < $first_timevar_type; $pos++){
                     my $cov_index = $cov_indices->[$pos];
@@ -234,6 +243,7 @@ sub add_frem_lines
                         push(@invariant_values,$row[$dv_index]);
                         $row[$mdv_index]=0 if (defined $mdv_index);
                         $row[$evid_index]=0 if (defined $evid_index) ;
+                        $row[$amt_index]=0 if (defined $amt_index and $keep_ids_noobs and $i == $lastline and $all_noobs);
 
                         $row[$type_index] = 100*($pos+1);  #fremtype value
                         if (defined $l2_index) {

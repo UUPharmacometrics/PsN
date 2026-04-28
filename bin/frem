@@ -43,6 +43,7 @@ my %optional_options = (
     'cholesky!' => undef,
     'always_proposal_density!' => undef,
     'skip_omegas:s' => undef,
+    'keep_ids_noobs!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -193,6 +194,13 @@ $help_text{-force_posdef_samples} = <<'EOF';
     Default is 500
 EOF
 
+$help_text{-keep_ids_noobs} = <<'EOF';
+    -keep_ids_noobs
+
+    By default all individuals that has no observations will be removed from the FREM dataset. This option
+    will add FREMTYPE to these individuals and keep them in the FREM dataset.
+EOF
+
 $help_text{-log} = <<'EOF';
     -log=list
 
@@ -265,6 +273,7 @@ $help_text{-skip_omegas} = <<'EOF';
     not set.
 EOF
 
+
 $help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
 EOF
@@ -336,6 +345,7 @@ my $frem = tool::frem->new(
     force_posdef_covmatrix => $options{'force_posdef_covmatrix'},
     force_posdef_samples => $options{'force_posdef_samples'},
     ntrt => $options{'ntrt'},
+    keep_ids_noobs => $options{'keep_ids_noobs'},
 );
 
 $frem->print_options(

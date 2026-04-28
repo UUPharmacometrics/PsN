@@ -78,6 +78,7 @@ has 'bipp' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'force_posdef_covmatrix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'force_posdef_samples' => ( is => 'rw', isa => 'Int', default => 500 );
 has 'ntrt' => ( is => 'rw', isa => 'Str' );
+has 'keep_ids_noobs' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 has '_intermediate_models_path' => ( is => 'rw', isa => 'Str' );
@@ -1265,7 +1266,7 @@ sub do_filter_dataset_and_append_binary
     );
 
     my $indices = get_indices(target => $data_set_headers,
-        keys => ['EVID', 'MDV', $fremtype, $self->dv, 'L2']);
+        keys => ['EVID', 'MDV', $fremtype, $self->dv, 'L2', 'AMT']);
 
     my @cov_indices;
     my @is_log;
@@ -1365,7 +1366,9 @@ sub do_frem_dataset
         dv_index => $indices->{$self->dv},
         type_index => $indices->{$fremtype},
         cov_indices => $indices->{'cov_indices'},
-        l2_index => $indices->{'L2'}
+        l2_index => $indices->{'L2'},
+        amt_index => $indices->{'AMT'},
+        keep_ids_noobs => $self->keep_ids_noobs,
     );
 
     if ($do_check) {

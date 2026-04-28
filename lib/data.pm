@@ -405,7 +405,7 @@ sub remove_ids_with_no_obs
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-         mdv_index => { isa => 'Int', optional => 0 },
+        mdv_index => { isa => 'Int', optional => 0 },
     );
     my $mdv_index = $parm{'mdv_index'};
 
@@ -440,6 +440,8 @@ sub frem_compute_covariate_properties
         cov_indices => { isa => 'ArrayRef', optional => 0 },
         first_timevar_type => { isa => 'Int', optional => 1 },
         l2_index => { isa => 'Maybe[Int]', optional => 1 },
+        amt_index => { isa => 'Maybe[Int]', optional => 1 },
+        keep_ids_noobs => { isa => 'Bool', optional => 1, default => 0 },
     );
     #ref of hash of cov names to column numbers
     my $filtered_data = $parm{'filtered_data'};
@@ -455,6 +457,8 @@ sub frem_compute_covariate_properties
     my $cov_indices = $parm{'cov_indices'};
     my $first_timevar_type = $parm{'first_timevar_type'};
     my $l2_index = $parm{'l2_index'};
+    my $amt_index = $parm{'amt_index'};
+    my $keep_ids_noobs = $parm{'keep_ids_noobs'};
 
     my $results={};
 
@@ -496,7 +500,9 @@ sub frem_compute_covariate_properties
         cov_indices => $cov_indices,
         is_log => $is_log,
         first_timevar_type => $first_timevar_type,
-        l2_index => $l2_index);
+        l2_index => $l2_index,
+        amt_index => $amt_index,
+        keep_ids_noobs => $keep_ids_noobs);
 
     $results->{'invariant_median'}= [];
     $results->{'invariant_mean'}= [];
@@ -561,6 +567,8 @@ sub add_frem_lines
         is_log => { isa =>'ArrayRef', optional => 0 },
         first_timevar_type => { isa => 'Int', optional => 0 },
         l2_index => { isa => 'Maybe[Int]', optional => 1},
+        amt_index => { isa => 'Maybe[Int]', optional => 1},
+        keep_ids_noobs => { isa => 'Bool', optional => 1, default => 0},
     );
     my $type_index = $parm{'type_index'};
     my $occ_index = $parm{'occ_index'};
@@ -571,6 +579,8 @@ sub add_frem_lines
     my $is_log = $parm{'is_log'};
     my $first_timevar_type = $parm{'first_timevar_type'};
     my $l2_index = $parm{'l2_index'};
+    my $amt_index = $parm{'amt_index'};
+    my $keep_ids_noobs = $parm{'keep_ids_noobs'};
 
     my @invariant_matrix;
     my @timevar_matrix;
@@ -580,7 +590,9 @@ sub add_frem_lines
     croak("No individuals defined in data object based on ".
         $self->full_name ) unless ( defined $first_id );
 
-    $self->remove_ids_with_no_obs(mdv_index => $mdv_index);
+    if (not $keep_ids_noobs) {
+        $self->remove_ids_with_no_obs(mdv_index => $mdv_index);
+    }
 
     my @missing_invariants= (0) x ($first_timevar_type);
     foreach my $individual ( @{$self->individuals()} ) {
@@ -593,7 +605,9 @@ sub add_frem_lines
                                                                   cov_indices => $cov_indices,
                                                                   is_log => $is_log,
                                                                   first_timevar_type => $first_timevar_type,
-                                                                  l2_index => $l2_index);
+                                                                  l2_index => $l2_index,
+                                                                  amt_index => $amt_index,
+                                                                  keep_ids_noobs => $keep_ids_noobs);
         for (my $pos=0; $pos < $first_timevar_type; $pos++){
             next if ($missing_invariants[$pos] > 0);
             if ($invariants->[$pos] == $self->missing_data_token()){

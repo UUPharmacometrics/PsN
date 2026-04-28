@@ -7,6 +7,8 @@ Changes and bug fixes from PsN 5.7.0 to x.x.x
    __frem__
 
 * Remove individuals with no observations from dataset
+* Add option -keep_ids_noobs to keep individuals with no observations.
+  These will also be given the FREM records.
 
    __update_inits__
 
