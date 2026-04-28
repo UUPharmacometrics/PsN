@@ -401,6 +401,27 @@ sub append_binary_columns
     return (\@mapping,\@new_indices,\@new_categorical,\@baseline_and_multiple);
 }
 
+sub remove_ids_with_no_obs
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+         mdv_index => { isa => 'Int', optional => 0 },
+    );
+    my $mdv_index = $parm{'mdv_index'};
+
+    my @keep;
+    foreach my $individual (@{$self->individuals}) {
+        foreach my $datarow (@{$individual->subject_data}) {
+            my @row = split(/,/, $datarow);
+            if ($row[$mdv_index] == 0) {
+                push @keep, $individual;
+                last;
+            }
+        }
+    }
+    $self->individuals(\@keep);
+}
+
 sub frem_compute_covariate_properties
 {
     #static method, no self
@@ -558,6 +579,8 @@ sub add_frem_lines
 
     croak("No individuals defined in data object based on ".
         $self->full_name ) unless ( defined $first_id );
+
+    $self->remove_ids_with_no_obs(mdv_index => $mdv_index);
 
     my @missing_invariants= (0) x ($first_timevar_type);
     foreach my $individual ( @{$self->individuals()} ) {
