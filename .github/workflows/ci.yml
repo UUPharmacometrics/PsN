@@ -198,8 +198,8 @@ jobs:
         run: |
           brew tap r-lib/rig
           brew install --cask rig
-          rig add 3.5.3
-          rig default 3.5.3
+          rig add 4.5.3
+          rig default 4.5.3
       - name: Setup gfortran
         uses: fortran-lang/setup-fortran@v1
         with:
