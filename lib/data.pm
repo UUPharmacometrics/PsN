@@ -405,9 +405,13 @@ sub remove_ids_with_no_obs
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        mdv_index => { isa => 'Int', optional => 0 },
+        mdv_index => { isa => 'Maybe[Int]', optional => 0 },
     );
     my $mdv_index = $parm{'mdv_index'};
+
+    if (not defined $mdv_index) {
+        return;
+    }
 
     my @keep;
     foreach my $individual (@{$self->individuals}) {
