@@ -505,6 +505,9 @@ jobs:
           with:
             name: win-installer
             path: ${{ env.packagename }}
+        - name: Debug
+          if: ${{ failure() }}
+          uses: mxschmitt/action-tmate@v3
 
   test-windows:
     needs: [build-windows, get-nonmem]
