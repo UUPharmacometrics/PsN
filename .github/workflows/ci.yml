@@ -22,12 +22,12 @@ jobs:
       - name: make release
         run: make release
       - name: Upload installation artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: targz
           path: PsN-*.tar.gz
       - name: Upload documentation artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
             name: docs
             path: doc/*.pdf
@@ -37,7 +37,7 @@ jobs:
     steps:
       - name: Cache NONMEM
         id: cache-nonmem
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
             path: 751.zip
             key: nonmem-751
@@ -104,7 +104,7 @@ jobs:
           echo 'key Q' >>lynxcmds
           lynx -accept-all-cookies nonmem.iconplc.com -cmd_script=lynxcmds
       - name: Upload cache workaround
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cache-workaround
           path: 751.zip
@@ -118,7 +118,7 @@ jobs:
           name: targz
       - name: Cache NONMEM
         id: cache-nonmem
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
             path: 751.zip
             key: nonmem-751
@@ -176,7 +176,7 @@ jobs:
           cd $TESTPATH
           prove -r -j3 system
       - name: Upload failed system test directories artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: ${{ failure() }}
         with:
             name: system-tests-ubuntu
@@ -203,7 +203,7 @@ jobs:
         uses: r-lib/actions/setup-pandoc@v2
       - name: Get NONMEM
         id: cache-nonmem
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
             path: 751.zip
             key: nonmem-751
@@ -255,7 +255,7 @@ jobs:
           cd $TESTPATH
           prove -r -j4 system
       - name: Upload failed system test directories artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: ${{ failure() }}
         with:
             name: system-tests-macos
@@ -501,7 +501,7 @@ jobs:
             echo "packagename=${packagename}" >> $GITHUB_ENV
           shell: bash
         - name: Upload Windows package
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v6
           with:
             name: win-installer
             path: ${{ env.packagename }}
@@ -618,7 +618,7 @@ jobs:
           prove -r -j3 system
         shell: cmd
       - name: Upload failed system test directories artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: ${{ failure() }}
         with:
             name: system-tests-windows
