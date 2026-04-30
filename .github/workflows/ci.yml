@@ -157,6 +157,8 @@ jobs:
           python-version: '3.11'
       - name: Install PsN
         run: cd PsN-Source; sudo perl setup.pl -auto
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       - name: Update psn.conf
         run: |
           export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
@@ -241,6 +243,8 @@ jobs:
           sudo cpan -T Statistics::Distributions
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       - name: Update psn.conf
         run: |
           export PSNPATH=$(find /opt/homebrew/Cellar/perl/ -type d -name 'PsN_[0-9]*')
