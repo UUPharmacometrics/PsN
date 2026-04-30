@@ -202,7 +202,7 @@ jobs:
         uses: fortran-lang/setup-fortran@v1
         with:
           compiler: gcc
-          version: 12
+          version: 15
       - name: Setup pandoc 
         uses: r-lib/actions/setup-pandoc@v2
       - name: Get NONMEM
