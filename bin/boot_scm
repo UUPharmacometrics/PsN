@@ -671,6 +671,12 @@ if ((not $config_file->linearize) or $options{'methodA'}){
                        copy_datafile => 0,
                        output_same_directory => 1,
                        copy_output => 0    );
+    
+    my $phi_file = utils::file::replace_extension($model->filename, 'phi');
+    my $phi_path = $model->directory . $phi_file;
+    if (-e $phi_path) {
+        copy($phi_path, $preprocessdir . '/orig_model_for_derivatives.phi');
+    }
 
     #  - Run non-linear model once + linearize. Filtering already done if needed
     my $deriv_dir = $main_directory.'/compute_derivatives_dir';
