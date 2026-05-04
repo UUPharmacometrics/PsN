@@ -201,10 +201,10 @@ jobs:
         with:
           r-version: '4.5.3'
       - name: Setup gfortran
-        uses: fortran-lang/setup-fortran@v1
+        uses: rikardn/setup-fortran@f6a49e34d573ca3753a8ea751bf8dda1879e5f05
         with:
           compiler: gcc
-          version: 15
+          version: 12
       - name: Setup pandoc 
         uses: r-lib/actions/setup-pandoc@v2
       - name: Get NONMEM
@@ -220,7 +220,7 @@ jobs:
       - name: Install NONMEM
         run: |
           cd nm751CD
-          /bin/bash SETUP75 $(greadlink -f .) $(greadlink -f ../nm751) gfortran-15 y ar same rec q
+          /bin/bash SETUP75 $(greadlink -f .) $(greadlink -f ../nm751) gfortran y ar same rec q
       - name: NONMEM license
         run: echo $LICENSE_KEY >nm751/license/nonmem.lic
         env:
