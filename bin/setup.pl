@@ -518,7 +518,7 @@ sub abort
     print "\n\nThe installation process has been aborted, PsN was not installed.";
     print "\n\nPress ENTER to exit the installation program.\n";
     my $dirt = <STDIN>;
-    exit;
+    exit(1);
 }
 
 sub get_input
