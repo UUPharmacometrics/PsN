@@ -544,6 +544,9 @@ sub run_r
 {
     my $line = shift;
     system("Rscript -e \"$line\"");
+    if ($?) {
+        abort("Error in installation of R packages\n");
+    }
 }
 
 sub create_directory
