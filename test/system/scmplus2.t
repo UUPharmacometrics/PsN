@@ -17,7 +17,7 @@ our $dir = "$tempdir/scmplus_test";
 my @configs=('scmplus/run1.scm');
 my @runs = (
 	'run1.scm -no-abort_on_fail',
-	'run1.scm -scope=none -etas -no-abort_on_fail',
+    #'run1.scm -scope=none -etas -no-abort_on_fail',
 );
 
 

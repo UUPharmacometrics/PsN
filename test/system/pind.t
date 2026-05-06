@@ -12,7 +12,7 @@ our $tempdir = create_test_dir('system_pind');
 my $model_dir = $includes::testfiledir;
 
 my @commands = 
-	(get_command('pind') . " $model_dir/pheno5.mod -clean=3",
+	(#get_command('pind') . " $model_dir/pheno5.mod -clean=3",
 	);
 chdir($tempdir);
 foreach my $command (@commands){

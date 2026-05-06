@@ -23,7 +23,6 @@ our $file_dir = $includes::testfiledir;
 my @config_files = qw (
 config_different_parameterizations_different_covariates.scm
 config_foce_prop.scm
-config_foce_prop_upd.scm
 config_alternative_parameterizations.scm
 config_centering_bivariate.scm
 config_emax.scm

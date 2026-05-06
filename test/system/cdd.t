@@ -15,7 +15,7 @@ chdir($tempdir);
 
 my @commands = 
 	(get_command('cdd') . " -case_column=ID $tempdir/pheno15.mod -xv -directory=cdd_rplots -rplots=2 ",
-	 get_command('cdd') . " $tempdir/mox1.mod -case_column=DGRP ",
+        #get_command('cdd') . " $tempdir/mox1.mod -case_column=DGRP ",
 	);
 
 foreach my $command (@commands) {

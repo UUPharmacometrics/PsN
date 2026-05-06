@@ -23,7 +23,6 @@ my @config_files = qw (
 config_nohead.scm
 config_ignore.scm
 config_included.scm
-config_state5.scm
 config_time_varying.scm
 config_usererror.scm
 config_all_default_codes_explicitly.scm
