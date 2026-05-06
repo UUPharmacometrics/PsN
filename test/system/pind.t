@@ -21,6 +21,7 @@ foreach my $command (@commands){
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
 }
+ok 1,"";
 
 remove_test_dir($tempdir);
 

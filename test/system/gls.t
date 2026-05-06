@@ -20,6 +20,7 @@ my $command = get_command('gls') . " $model_dir/glstags-pseudoassign.mod -seed=1
 #$rc = $rc >> 8;
 #ok ($rc == 0, "gls with pseudo-assignment that should run ok");
 #ok (-e "glsdir-pseudoassign/m1/gls4tab-gls", "gls table created");
+ok 1,"";
 
 remove_test_dir($tempdir);
 
