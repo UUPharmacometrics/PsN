@@ -378,6 +378,8 @@ die("File " . $config_file->model() . "does not exist")
 my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval $eval_string,
                            filename           => $config_file -> model) ;
+my $phi_file = utils::file::replace_extension($model->filename, 'phi');
+my $phi_path = $model->directory . $phi_file;
 if( $options{'shrinkage'} ) {
     $model -> shrinkage_stats( enabled => 1 );
 }
@@ -672,10 +674,14 @@ if ((not $config_file->linearize) or $options{'methodA'}){
                        output_same_directory => 1,
                        copy_output => 0    );
     
-    my $phi_file = utils::file::replace_extension($model->filename, 'phi');
-    my $phi_path = $model->directory . $phi_file;
     if (-e $phi_path) {
-        copy($phi_path, $preprocessdir . '/orig_model_for_derivatives.phi');
+        my $filter_data_dir = "preprocess_data_dir";
+        my $filter_data_phi = "$filter_data_dir/filter_data.phi";
+        if (-e $filter_data_phi) {
+            copy($phi_path, "$filter_data_dir/orig_model_for_derivatives.phi"); 
+        } else {
+            copy($phi_path, "$preprocessdir/orig_model_for_derivatives.phi");
+        }
     }
 
     #  - Run non-linear model once + linearize. Filtering already done if needed
