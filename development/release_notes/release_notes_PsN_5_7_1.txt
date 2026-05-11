@@ -1,8 +1,12 @@
 *********************************************
-Changes and bug fixes from PsN 5.7.0 to x.x.x 
+Changes and bug fixes from PsN 5.7.0 to 5.7.1 
 *********************************************
 
    __general__
+
+   __boot_scm__
+
+* Use phi file of input model for linearization
 
    __frem__
 
