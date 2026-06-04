@@ -184,7 +184,6 @@ $help_text{-auto_rawres} = <<'EOF';
     -rawres_input.
 EOF
 
-
 $help_text{-boxcox} = <<'EOF';
     -boxcox
 
@@ -376,6 +375,7 @@ $help_text{-recenter} = <<'EOF';
     -no-recenter, the original parameter vector will be kept and a warning
     will be printed that some vectors had a negative delta-ofv.
 EOF
+
 $help_text{-resamples} = <<'EOF';
     -resamples=m1,m2
 
@@ -410,7 +410,6 @@ $help_text{-rse_sigma} = <<'EOF';
 
     Default not set. See help text for -rse_omega.
 EOF
-
 
 $help_text{-rse_theta} = <<'EOF';
     -rse_theta=X
