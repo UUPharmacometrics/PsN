@@ -299,7 +299,7 @@ $help_text{-offset_rawres} = <<'EOF';
 EOF
 
 $help_text{-omega_inflation} = <<'EOF';
-    -Äomega_inflation=X
+    -omega_inflation=X
 
     Default is the scalar 1, which is the same as no inflation. Either a
     positive vector with length equal to the number of estimated (not FIX)
@@ -336,7 +336,7 @@ $help_text{-problems_per_file} = <<'EOF';
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
-    rawres_input=filename
+    -rawres_input=filename
 
     If rawres_input is given, sir will run an intial 0th iteration in which
     sir will read all parameter vectors from this file, starting on line
