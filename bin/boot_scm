@@ -225,6 +225,7 @@ if (defined $options{'directory'} and -e $options{'directory'}) {
     die "boot_scm cannot resume a previous run. Please change your -directory.\n";
 }
 
+my $boot_scm_method;    # linA, linB or nonlin
 if ($config_file->linearize){
     die "Option -second_order is currently broken"
         if $config_file->second_order();
@@ -248,8 +249,14 @@ if ($config_file->linearize){
         my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->lst_file());
         $config_file->lst_file($dir . $file);
     }
+    if ($options{'methodA'}) {
+        $boot_scm_method = 'linA';
+    } else {
+        $boot_scm_method = 'linB';
+    }
 
 }else{
+    $boot_scm_method = 'nonlin';
     die "Option -foce is only allowed together with option -linearize"
         if $config_file->foce();
     die "Option -second_order is only allowed together with option -linearize"
@@ -696,7 +703,7 @@ if ((not $config_file->linearize) or $options{'methodA'}){
                                        both_directions => 0,
                                        skip_filtering => 1,
                                        return_after_derivatives_done => 1,
-                                    from_bootscm => 1,
+                                       boot_scm_method => $boot_scm_method, 
                                 ); #end scm prematurely
 
     $deriv_scm -> run;
@@ -883,7 +890,8 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
                   p_backward => $p_backward,
                   ofv_backward => $ofv_backward,
                   skip_filtering => 1,
-              from_bootscm => 1,);
+                  boot_scm_method => $boot_scm_method, 
+            );
 
         ui->category('scm');
         $scm -> run;
@@ -919,7 +927,8 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
                   models    => [$new_mod],
                   config_file => $config_file,
                   skip_filtering => 1,
-              from_bootscm => 1,);
+                  boot_scm_method => $boot_scm_method, 
+            );
 
         ui -> print( category => 'boot_scm',
                      message => "Starting bootstrap scm backward search $samp",

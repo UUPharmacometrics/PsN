@@ -103,7 +103,7 @@ has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to array of colnames to add to an extra data table output by derivatives.mod
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );   # Set to not use interaction columns in linearization (set D_EPSETA to 0)
 has 'use_data_format' => ( is => 'rw', isa => 'Bool', default => 0 );   # Should we use the workaround for big datasets
-has 'from_bootscm' => ( is => 'rw', isa => 'Bool', default => 0 );  # Are we called from a bootscm. This is a hack to fix a specific bug with non-binary catcovs under linearization
+has 'boot_scm_method' => ( is => 'rw', isa => 'Maybe[Str]', default => 0 );  # undef if not called from bootscm. linA, linB or nonlin otherwise
 has 'categorical_mean_offset' => ( is => 'rw', isa => 'Bool', default => 0 );   # Use mean instead of mode as offset
 has 'extra_data_columns' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );  # Columns to add to linbase.dta and $INPUT for linbase.mod
 has 'force_binarize' => ( is => 'rw', isa => 'Bool', default => 0 );   # Force binarization of categorical covariates
@@ -238,7 +238,7 @@ sub BUILD
     }
 
     # Pre-process non-bivariate categoricals for linearized scm
-    if ((not $self->from_linearize and not $self->from_bootscm and ($self->linearize or $self->force_binarize) and $self->step_number == 1 and defined $self->categorical_covariates)) {
+    if ((not $self->from_linearize and not defined $self->boot_scm_method and ($self->linearize or $self->force_binarize) and $self->step_number == 1 and defined $self->categorical_covariates)) {
         my $model = $self->models->[0];
         my $columns = $model->problems->[0]->columns_list();
         my $positions = array::get_positions(target => $columns, keys => $self->categorical_covariates);
@@ -1573,6 +1573,49 @@ sub modelfit_setup
                 used_covariates => \@used_covariates,
                 all_covariates  => \@all_covariates,
                 do_not_drop     => $self->do_not_drop);
+        }
+        if ($self->linearize and $self->step_number == 1 and $self->boot_scm_method eq 'linB') {
+            # Must create bootstrapped phi file for boot_scm linearized methodB
+
+            my $datafiles = $model->datafiles(absolute_path => 1);
+            my $data = data->new(
+                filename => $datafiles->[0],
+                ignoresign => defined $model->ignoresigns ? $model->ignoresigns->[0] : undef,
+                missing_data_token => $self->missing_data_token,
+                idcolumn => $model->idcolumns->[0],
+            );
+            my @eta_cols;
+            foreach my $colname (keys %{$data->column_head_indices}) {
+                if ($colname =~ /^ETA(\d+)/) {
+                    my $index = $data->column_head_indices->{$colname};
+                    push @eta_cols, $index; 
+                }
+            }
+            @eta_cols = sort @eta_cols;
+            my $previd = -1;
+            my $cur_subj = 0;
+            my $phi_path = $model->directory . 'bootstrapped.phi';
+            open my $fh, '>', $phi_path;
+            print $fh "TABLE NO.     1: First Order Conditional Estimation with Interaction: Problem=1 Subproblem=0 Superproblem1=0 Iteration1=0 Superproblem2=0 Iteration2=0\n";
+            print $fh ' SUBJECT_NO   ID           ';
+            for (my $i = 1; $i <= scalar(@eta_cols); $i++) {
+                printf $fh "%-13s", "ETA($i)";
+            }
+            print $fh "\n";
+            for my $ind (@{$data->individuals}) {
+                if ($previd != $ind->idnumber) {
+                    $previd = $ind->idnumber;
+                    $cur_subj++;
+                    printf $fh " %12d %12d", $cur_subj, $previd;
+                    my @a = split /,/, $ind->subject_data->[0];
+                    for my $col (@eta_cols) {
+                        printf $fh " %12.5E", $a[$col - 1];
+                    }
+                    print $fh "\n";
+                }
+            }
+            close $fh;
+            $start_model->init_etas(phi_name => 'bootstrapped.phi', full_path => 1);
         }
         $start_model->_write;
 
