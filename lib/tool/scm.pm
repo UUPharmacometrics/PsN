@@ -3736,10 +3736,12 @@ sub gof_pval
         }
         my $test_val;
         my $ofv;
+        my $failed = 0;
         if ( (not defined( $ofvs[$i] )) or (not defined $successful[$i]) or
             ($self->only_successful() and $successful[$i] != 1) ){
             $test_val = ' ' x 17 . 'FAILED';
             $ofv = ' ' x 4 . 'FAILED';
+            $failed = 1;
             push (@p_values,999);
         } else {
             $test_val = $base_ofv - $ofvs[$i];
@@ -3803,6 +3805,7 @@ sub gof_pval
         # Significant ?
         if( ($change eq '-inf') or
             ($change ne 'inf'
+                    and not $failed
                     and defined $ofvs[$i] and $test_val > $change
                     and (($direction eq 'forward' and $p_values[$i] <= $pval) or
                     ($direction eq 'backward' and $p_values[$i] >= $pval)))
