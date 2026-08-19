@@ -273,7 +273,7 @@ jobs:
 
   build-windows:
       needs: build
-      runs-on: windows-2022
+      runs-on: windows-2025
       steps:
         - name: Download installation tarball
           uses: actions/download-artifact@v8
@@ -523,7 +523,7 @@ jobs:
 
   test-windows:
     needs: [build-windows, get-nonmem]
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - name: Download installation tarball
         uses: actions/download-artifact@v8
