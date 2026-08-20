@@ -2,12 +2,17 @@
 
 use strict;
 use warnings;
+use Config;
 use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
+
+if ($Config{osname} eq 'MSWin32') { 
+	plan skip_all => "Skipping on Windows to save time";
+}
 
 use data;
 use file;

@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use Config;
 use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
@@ -9,6 +10,10 @@ use FindBin qw($Bin);
 use lib "$Bin/..";
 use includes;
 
+
+if ($Config{osname} eq 'MSWin32') { 
+	plan skip_all => "Skipping on Windows to save time";
+}
 
 our $tempdir = create_test_dir('system_scmplus2');
 

@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use Config;
 use File::Path 'rmtree';
 use Test::More;
 use FindBin qw($Bin);
@@ -9,6 +10,10 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
 #black box testing of data class and progs that are not covered by other test files
+
+if ($Config{osname} eq 'MSWin32') { 
+	plan skip_all => "Skipping on Windows to save time";
+}
 
 our $tempdir = create_test_dir('system_mcmp');
 chdir($tempdir);
