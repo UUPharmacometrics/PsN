@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Config;
 use File::Path 'rmtree';
-use Test::More tests=>2;
+use Test::More;
 use FindBin qw($Bin);
 use Config;
 use lib "$Bin/.."; #location of includes.pm

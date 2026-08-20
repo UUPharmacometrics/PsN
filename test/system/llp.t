@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Config;
 use File::Path 'rmtree';
-use Test::More tests=>1;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition

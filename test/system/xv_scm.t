@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>1;
+use Test::More;
 use File::Copy 'copy';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
