@@ -923,6 +923,7 @@ if (not running_on_windows()) {
         run_r("install.packages('remotes', lib='$rsafe_path', repos='$repos')");
         run_r("remotes::install_version('renv', lib='$rsafe_path', repos='$repos', version='1.1.7')");
         run_r("options(renv.consent=TRUE); renv::settings" . '\$' . "use.cache(FALSE); renv::restore(library='$rsafe_path', lockfile='PsNR/renv.lock')");
+        run_r("remotes::install_local('vaplot', lib='$rsafe_path', repos=NULL, dependencies=F)");
         run_r("remotes::install_local('PsNR', lib='$rsafe_path', repos=NULL, dependencies=F)");
         $set_rlib_path = 1;
     }
