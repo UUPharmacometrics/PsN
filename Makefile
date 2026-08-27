@@ -222,7 +222,7 @@ release: main rel_dir $(RELFILES) $(PDFFILES)
 	chmod -R a+r PsN-Source/test/test_files
 	sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
 	cp -ar PsNR PsN-Source
-	cd /tmp; rm -rf vaplot; git clone --depth 1 https://github.com/sebastianueckert/vaplot.git
+	cd /tmp; rm -rf vaplot; git clone --depth 1 -b digits https://github.com/rikardn/vaplot.git
 	cp -ar /tmp/vaplot PsN-Source
 	ls pharmpy
 	cd pharmpy; python3 -m build
