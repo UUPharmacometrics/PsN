@@ -1,0 +1,16 @@
+*********************************************
+Changes and bug fixes from PsN 5.7.1 to 5.7.2 
+*********************************************
+
+   __general__
+
+* Do not install vaplot from github on Mac and Linux. Instead bundle it with installer.
+  This solves a problem with sometimes needing a github token to install PsN.
+
+   __bootscm__
+
+* Reorder initial phi-file for method B
+
+   __scm__
+
+* Fix warning: 'Argument "                 FAILED" isn't numeric in numeric gt (>) at'
